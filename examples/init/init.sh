@@ -110,7 +110,7 @@ spec:
 EOF
 
 # Set context
-up ctx upbound/$SPACE/
+up ctx upbound/$SPACE
 
 # Apply controlplane.yaml
 kubectl apply -f controlplane.yaml
