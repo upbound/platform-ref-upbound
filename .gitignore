@@ -8,3 +8,4 @@
 kubeconfig
 manifests.yaml
 controlplane.yaml
+configuration.yaml

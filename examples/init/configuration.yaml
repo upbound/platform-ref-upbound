@@ -1,6 +1,0 @@
-apiVersion: pkg.crossplane.io/v1
-kind: Configuration
-metadata:
-  name: platform-ref-upbound
-spec:
-  package: xpkg.upbound.io/upbound/platform-ref-upbound:v0.1.0
