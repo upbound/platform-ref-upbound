@@ -1,0 +1,21 @@
+apiVersion: contrib.spaces.upbound.io/v1alpha1
+kind: XSharedProvider
+metadata:
+  name: upbound-upbound-aws-us-east-1
+spec:
+  parameters:
+    controlPlaneSelector:
+      labelSelector:
+        - matchLabels:
+            organizationName: upbound
+            space: upbound-aws-us-east-1
+        - matchLabels:
+            space: upbound-gcp-us-west-1
+    providerSpec:
+      - package: xpkg.upbound.io/upbound/provider-aws-ec2:v1.4.0
+        runtimeConfigRef:
+          name: debug
+      - package: xpkg.upbound.io/upbound/provider-aws-eks:v1.4.0
+        runtimeConfigRef:
+          name: debug
+      - package: xpkg.upbound.io/crossplane-contrib/provider-kubernetes:v0.13.0

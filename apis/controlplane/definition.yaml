@@ -1,0 +1,80 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xcontrolplanes.contrib.spaces.upbound.io
+spec:
+  group: contrib.spaces.upbound.io
+  names:
+    kind: XControlPlane
+    plural: xcontrolplanes
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  description: ControlPlane configuration parameters.
+                  properties:
+                    organizationName:
+                      type: string
+                      description: OrganizationName is the name of the organization to which the control plane belongs
+                    defaultControlPlane:
+                      type: boolean
+                      description: This will create a default ProviderConfig to mark this ControlPlane as the default/main.
+                    space:
+                      type: string
+                      description: Space is the name of the cloud space to which the control plane belongs
+                      enum:
+                        - upbound-aws-us-east-1
+                        - upbound-gcp-us-west-1
+                    group:
+                      type: string
+                      description: Group is the name of the group to which the control plane belongs
+                    crossplane:
+                      type: object
+                      description: Crossplane defines the configuration for Crossplane.
+                      properties:
+                        autoUpgrade:
+                          default:
+                            channel: Stable
+                          description: AutoUpgrades defines the auto upgrade configuration
+                            for Crossplane.
+                          properties:
+                            channel:
+                              default: Stable
+                              description: |-
+                                Channel defines the upgrade channels for Crossplane. We support the following channels where 'Stable' is the
+                                default:
+                                - None: disables auto-upgrades and keeps the control plane at its current version of Crossplane.
+                                - Patch: automatically upgrades the control plane to the latest supported patch version when it
+                                  becomes available while keeping the minor version the same.
+                                - Stable: automatically upgrades the control plane to the latest supported patch release on minor
+                                  version N-1, where N is the latest supported minor version.
+                                - Rapid: automatically upgrades the cluster to the latest supported patch release on the latest
+                                  supported minor version.
+                              enum:
+                                - None
+                                - Patch
+                                - Stable
+                                - Rapid
+                              type: string
+                          type: object
+                        version:
+                          pattern: '^[^v].*'
+                          description: Version is the version of Universal Crossplane to
+                            install.
+                          type: string
+                  required:
+                    - organizationName
+                    - space
+                    - group
+                    - crossplane
+              required:
+                - parameters

@@ -1,0 +1,27 @@
+apiVersion: contrib.spaces.upbound.io/v1alpha1
+kind: XSharedDeploymentRuntimeConfig
+metadata:
+  name: debug
+spec:
+  parameters:
+    controlPlaneSelector:
+      labelSelector:
+        - matchLabels:
+            organizationName: upbound
+            space: upbound-aws-us-east-1
+        - matchLabels:
+            space: upbound-gcp-us-west-1
+    deploymentRuntimeConfigSpec:
+      spec:
+        deploymentTemplate:
+          spec:
+            selector: {}
+            template:
+              spec:
+                containers:
+                  - name: package-runtime
+                    args:
+                      - --debug
+                    resources: {}
+        serviceTemplate: {}
+        serviceAccountTemplate: {}

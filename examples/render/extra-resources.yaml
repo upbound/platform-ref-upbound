@@ -1,0 +1,211 @@
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: ctp-providerconfig
+  creationTimestamp: "2024-05-26T10:28:00Z"
+  finalizers:
+  - in-use.crossplane.io
+  generateName: ctp-dev-
+  generation: 1
+  labels:
+    controlplane: ctp-dev
+    crossplane.io/claim-name: ""
+    crossplane.io/claim-namespace: ""
+    crossplane.io/composite: ctp-dev
+    group: default
+    organizationName: upbound
+    space: upbound-gcp-us-west-1
+    type: ctp
+  name: 5ab0024e-fbc3-4a42-a1a1-a1dd4875093d-ctp
+  ownerReferences:
+  - apiVersion: contrib.spaces.upbound.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XControlPlane
+    name: ctp-dev
+    uid: 5ab0024e-fbc3-4a42-a1a1-a1dd4875093d
+  resourceVersion: "1847"
+  uid: ed33c79a-b5c2-490f-920c-e92b403acff3
+spec:
+  credentials:
+    secretRef:
+      key: kubeconfig
+      name: 5ab0024e-fbc3-4a42-a1a1-a1dd4875093d-ctp-kubeconfig
+      namespace: crossplane-system
+    source: Secret
+  identity:
+    secretRef:
+      key: token
+      name: api-token
+      namespace: crossplane-system
+    source: Secret
+    type: UpboundToken
+status: {}
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: space-providerconfig
+  creationTimestamp: "2024-05-26T10:28:00Z"
+  finalizers:
+  - in-use.crossplane.io
+  generateName: ctp-dev-
+  generation: 1
+  labels:
+    controlplane: ctp-dev
+    crossplane.io/claim-name: ""
+    crossplane.io/claim-namespace: ""
+    crossplane.io/composite: ctp-dev
+    group: default
+    organizationName: upbound
+    space: upbound-gcp-us-west-1
+    type: space
+  name: 5ab0024e-fbc3-4a42-a1a1-a1dd4875093d-space
+  ownerReferences:
+  - apiVersion: contrib.spaces.upbound.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XControlPlane
+    name: ctp-dev
+    uid: 5ab0024e-fbc3-4a42-a1a1-a1dd4875093d
+  resourceVersion: "1848"
+  uid: 848bfc11-899f-4861-8f96-86a6bc6191ca
+spec:
+  credentials:
+    secretRef:
+      key: kubeconfig
+      name: 5ab0024e-fbc3-4a42-a1a1-a1dd4875093d-space-kubeconfig
+      namespace: crossplane-system
+    source: Secret
+  identity:
+    secretRef:
+      key: token
+      name: api-token
+      namespace: crossplane-system
+    source: Secret
+    type: UpboundToken
+status:
+  users: 1
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: ctp-providerconfig
+  creationTimestamp: "2024-05-26T12:09:42Z"
+  finalizers:
+  - in-use.crossplane.io
+  generateName: ctp-qa-
+  generation: 1
+  labels:
+    controlplane: ctp-qa
+    crossplane.io/claim-name: ""
+    crossplane.io/claim-namespace: ""
+    crossplane.io/composite: ctp-qa
+    group: default
+    organizationName: upbound
+    space: upbound-aws-us-east-1
+    type: ctp
+  name: bd3e63af-40bd-4683-9541-79ac53ae31d1-ctp
+  ownerReferences:
+  - apiVersion: contrib.spaces.upbound.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XControlPlane
+    name: ctp-qa
+    uid: bd3e63af-40bd-4683-9541-79ac53ae31d1
+  resourceVersion: "9545"
+  uid: d8168b0c-6628-4fab-b162-789fda7b51a9
+spec:
+  credentials:
+    secretRef:
+      key: kubeconfig
+      name: bd3e63af-40bd-4683-9541-79ac53ae31d1-ctp-kubeconfig
+      namespace: crossplane-system
+    source: Secret
+  identity:
+    secretRef:
+      key: token
+      name: api-token
+      namespace: crossplane-system
+    source: Secret
+    type: UpboundToken
+status: {}
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: space-providerconfig
+  creationTimestamp: "2024-05-26T12:09:42Z"
+  finalizers:
+  - in-use.crossplane.io
+  generateName: ctp-qa-
+  generation: 1
+  labels:
+    controlplane: ctp-qa
+    crossplane.io/claim-name: ""
+    crossplane.io/claim-namespace: ""
+    crossplane.io/composite: ctp-qa
+    group: default
+    organizationName: upbound
+    space: upbound-aws-us-east-1
+    type: space
+  name: bd3e63af-40bd-4683-9541-79ac53ae31d1-space
+  ownerReferences:
+  - apiVersion: contrib.spaces.upbound.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XControlPlane
+    name: ctp-qa
+    uid: bd3e63af-40bd-4683-9541-79ac53ae31d1
+  resourceVersion: "9546"
+  uid: bace88c1-8ff0-4241-8ede-9e6b76111ce6
+spec:
+  credentials:
+    secretRef:
+      key: kubeconfig
+      name: bd3e63af-40bd-4683-9541-79ac53ae31d1-space-kubeconfig
+      namespace: crossplane-system
+    source: Secret
+  identity:
+    secretRef:
+      key: token
+      name: api-token
+      namespace: crossplane-system
+    source: Secret
+    type: UpboundToken
+status:
+  users: 1
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"kubernetes.crossplane.io/v1alpha1","kind":"ProviderConfig","metadata":{"annotations":{},"name":"default"},"spec":{"credentials":{"secretRef":{"key":"kubeconfig","name":"ctp-main","namespace":"crossplane-system"},"source":"Secret"},"identity":{"secretRef":{"key":"token","name":"api-token","namespace":"crossplane-system"},"source":"Secret","type":"UpboundToken"}}}
+  creationTimestamp: "2024-05-26T10:23:22Z"
+  finalizers:
+  - in-use.crossplane.io
+  generation: 2
+  name: default
+  resourceVersion: "9560"
+  uid: f328c44a-3d8f-4383-9aeb-ee35c5731093
+spec:
+  credentials:
+    secretRef:
+      key: kubeconfig
+      name: ctp-main
+      namespace: crossplane-system
+    source: Secret
+  identity:
+    secretRef:
+      key: token
+      name: api-token
+      namespace: crossplane-system
+    source: Secret
+    type: UpboundToken
+status:
+  users: 4

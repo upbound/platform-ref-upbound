@@ -1,0 +1,119 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xsharedproviders.contrib.spaces.upbound.io
+spec:
+  compositeTypeRef:
+    apiVersion: contrib.spaces.upbound.io/v1alpha1
+    kind: XSharedProvider
+  mode: Pipeline
+  pipeline:
+    - step: get-controlplanes-by-group
+      functionRef:
+        name: crossplane-contrib-function-extra-resources
+      input:
+        apiVersion: extra-resources.fn.crossplane.io/v1beta1
+        kind: Input
+        spec:
+          extraResources:
+            - kind: ProviderConfig
+              into: ProviderConfig
+              apiVersion: kubernetes.crossplane.io/v1alpha1
+              type: Selector
+              selector:
+                matchLabels:
+                  - key: type
+                    type: Value
+                    value: ctp
+
+    - step: go-templating
+      functionRef:
+        name: crossplane-contrib-function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- $providerConfigs := index (index .context "apiextensions.crossplane.io/extra-resources") "ProviderConfig" }}
+            {{- $spec := .observed.composite.resource.spec }}
+            {{- range $i, $providerConfig := $providerConfigs }}
+              {{- $labels := index $providerConfig "metadata" "labels" }}
+              {{- $controlPlaneMatch := false }}
+              {{- if ne $spec.parameters.controlPlaneSelector nil }}
+                {{- range $selector := $spec.parameters.controlPlaneSelector.labelSelector }}
+                  {{- $match := true }}
+                  {{- if ne $selector.matchLabels nil }}
+                    {{- range $key, $value := $selector.matchLabels }}
+                      {{- if ne (index $labels $key) $value }}
+                        {{- $match = false }}
+                      {{- end }}
+                    {{- end }}
+                  {{- else }}
+                    {{- $match = false }}
+                  {{- end }}
+                  {{- if $match }}
+                    {{- $controlPlaneMatch = true }}
+                  {{- end }}
+                {{- end }}
+              {{- end }}
+              {{- if $controlPlaneMatch }}
+                {{- range $j, $providerSpec := $spec.parameters.providerSpec }}
+                  {{- $packageParts := splitList "/" $providerSpec.package }}
+                  {{- $namePart := index $packageParts 2 }}
+                  {{- $orgPart := index $packageParts 1 }}
+                  {{- $nameVersionParts := splitList ":" $namePart }}
+                  {{- $name := index $nameVersionParts 0 }}
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ index $labels "space" }}-{{ index $labels "group" }}-{{ index $labels "controlplane" }}-provider-{{ $j }}
+              labels:
+                space: {{ index $labels "space" }}
+                group: {{ index $labels "group" }}
+                controlplane: {{ index $labels "controlplane" }}
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: pkg.crossplane.io/v1
+                  kind: Provider
+                  metadata:
+                    name: {{ $orgPart }}-{{ $name }}
+                  spec:
+                    package: {{ $providerSpec.package }}
+                    {{- if $providerSpec.runtimeConfigRef.name }}
+                    runtimeConfigRef:
+                      name: {{ $providerSpec.runtimeConfigRef.name }}
+                    {{- end }}
+              providerConfigRef:
+                name: {{ index $providerConfig "metadata" "name" }}
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha1
+            kind: ObservedObjectCollection
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ index $labels "space" }}-{{ index $labels "group" }}-{{ index $labels "controlplane" }}-pkgrev-{{ $j }}
+            spec:
+              observeObjects:
+                apiVersion: pkg.crossplane.io/v1
+                kind: ProviderRevision
+                selector:
+                  matchLabels:
+                    pkg.crossplane.io/package: {{ $orgPart }}-{{ $name }}
+              objectTemplate:
+                metadata:
+                  labels:
+                    space: {{ index $labels "space" }}
+                    group: {{ index $labels "group" }}
+                    controlplane: {{ index $labels "controlplane" }}
+              providerConfigRef:
+                name: {{ index $providerConfig "metadata" "name" }}
+                {{- end }}
+              {{- end }}
+            {{- end }}
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: crossplane-contrib-function-auto-ready

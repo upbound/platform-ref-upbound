@@ -1,0 +1,10 @@
+/.cache
+/.work
+/_output
+/results
+/.idea
+
+*.xpkg
+kubeconfig
+manifests.yaml
+controlplane.yaml

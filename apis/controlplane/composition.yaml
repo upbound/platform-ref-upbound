@@ -1,0 +1,391 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xcontrolplanes.contrib.spaces.upbound.io
+spec:
+  compositeTypeRef:
+    apiVersion: contrib.spaces.upbound.io/v1alpha1
+    kind: XControlPlane
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: crossplane-contrib-function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: space-providerconfig
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha1
+              kind: ProviderConfig
+              metadata:
+                labels:
+                  type: space
+              spec:
+                credentials:
+                  source: Secret
+                  secretRef:
+                    namespace: crossplane-system
+                    key: kubeconfig
+                identity:
+                  type: UpboundTokens
+                  source: Secret
+                  secretRef:
+                    name: api-token
+                    namespace: crossplane-system
+                    key: token
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.uid
+                toFieldPath: spec.credentials.secretRef.name
+                transforms:
+                  - string:
+                      fmt: '%s-space-kubeconfig'
+                      type: Format
+                    type: string
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.uid
+                toFieldPath: metadata.name
+                transforms:
+                  - string:
+                      fmt: '%s-space'
+                      type: Format
+                    type: string
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: metadata.labels[controlplane]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.group
+                toFieldPath: metadata.labels[group]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.space
+                toFieldPath: metadata.labels[space]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.organizationName
+                toFieldPath: metadata.labels[organizationName]
+            readinessChecks:
+              - type: None
+
+          - name: ctp-providerconfig
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha1
+              kind: ProviderConfig
+              metadata:
+                labels:
+                  type: ctp
+              spec:
+                credentials:
+                  source: Secret
+                  secretRef:
+                    namespace: crossplane-system
+                    key: kubeconfig
+                identity:
+                  type: UpboundTokens
+                  source: Secret
+                  secretRef:
+                    name: api-token
+                    namespace: crossplane-system
+                    key: token
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.uid
+                toFieldPath: spec.credentials.secretRef.name
+                transforms:
+                  - string:
+                      fmt: '%s-ctp-kubeconfig'
+                      type: Format
+                    type: string
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.uid
+                toFieldPath: metadata.name
+                transforms:
+                  - string:
+                      fmt: '%s-ctp'
+                      type: Format
+                    type: string
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: metadata.labels[controlplane]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.group
+                toFieldPath: metadata.labels[group]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.space
+                toFieldPath: metadata.labels[space]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.organizationName
+                toFieldPath: metadata.labels[organizationName]
+            readinessChecks:
+              - type: None
+
+          - name: space-kubeconfig
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              metadata:
+                labels:
+                  type: space-kubeconfig
+              spec:
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: Secret
+                    metadata:
+                      namespace: crossplane-system
+                    type: Opaque
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.uid
+                transforms:
+                  - string:
+                      fmt: '%s-space-kubeconfig'
+                      type: Format
+                    type: string
+                toFieldPath: spec.forProvider.manifest.metadata.name
+              - type: CombineFromComposite
+                combine:
+                  strategy: string
+                  string:
+                    fmt: |
+                      apiVersion: v1
+                      clusters:
+                      - cluster:
+                          insecure-skip-tls-verify: true
+                          server: https://%s.space.mxe.upbound.io/
+                        name: upbound
+                      contexts:
+                      - context:
+                          cluster: upbound
+                          extensions:
+                          - extension:
+                              apiVersion: upbound.io/v1alpha1
+                              kind: SpaceExtension
+                              spec:
+                                cloud:
+                                  organization: %s
+                            name: spaces.upbound.io/space
+                          namespace: default
+                          user: upbound
+                        name: upbound
+                      current-context: upbound
+                      kind: Config
+                      preferences: {}
+                      users:
+                      - name: upbound
+                        user:
+                          exec:
+                            apiVersion: client.authentication.k8s.io/v1
+                            args:
+                            - organization
+                            - token
+                            command: up
+                            env:
+                            - name: ORGANIZATION
+                              value: %s
+                            - name: UP_PROFILE
+                              value: default
+                            interactiveMode: IfAvailable
+                            provideClusterInfo: false
+                  variables:
+                    - fromFieldPath: spec.parameters.space
+                    - fromFieldPath: spec.parameters.organizationName
+                    - fromFieldPath: spec.parameters.organizationName
+                toFieldPath: spec.forProvider.manifest.stringData.kubeconfig
+
+          - name: ctp-kubeconfig
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              metadata:
+                labels:
+                  type: ctp-kubeconfig
+              spec:
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: Secret
+                    metadata:
+                      namespace: crossplane-system
+                    type: Opaque
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.uid
+                transforms:
+                  - string:
+                      fmt: '%s-ctp-kubeconfig'
+                      type: Format
+                    type: string
+                toFieldPath: spec.forProvider.manifest.metadata.name
+              - type: CombineFromComposite
+                combine:
+                  strategy: string
+                  string:
+                    fmt: |
+                      apiVersion: v1
+                      clusters:
+                      - cluster:
+                          insecure-skip-tls-verify: true
+                          server: https://%s.space.mxe.upbound.io/apis/spaces.upbound.io/v1beta1/namespaces/%s/controlplanes/%s/k8s
+                        name: upbound
+                      contexts:
+                      - context:
+                          cluster: upbound
+                          extensions:
+                          - extension:
+                              apiVersion: upbound.io/v1alpha1
+                              kind: SpaceExtension
+                              spec:
+                                cloud:
+                                  organization: %s
+                            name: spaces.upbound.io/space
+                          namespace: default
+                          user: upbound
+                        name: upbound
+                      current-context: upbound
+                      kind: Config
+                      preferences: {}
+                      users:
+                      - name: upbound
+                        user:
+                          exec:
+                            apiVersion: client.authentication.k8s.io/v1
+                            args:
+                            - organization
+                            - token
+                            command: up
+                            env:
+                            - name: ORGANIZATION
+                              value: %s
+                            - name: UP_PROFILE
+                              value: default
+                            interactiveMode: IfAvailable
+                            provideClusterInfo: false
+                  variables:
+                    - fromFieldPath: spec.parameters.space
+                    - fromFieldPath: spec.parameters.group
+                    - fromFieldPath: metadata.name
+                    - fromFieldPath: spec.parameters.organizationName
+                    - fromFieldPath: spec.parameters.organizationName
+                toFieldPath: spec.forProvider.manifest.stringData.kubeconfig
+
+          - name: controlplane
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              metadata:
+                labels:
+                  type: controlplane
+              spec:
+                readiness:
+                  policy: DeriveFromObject
+                forProvider:
+                  manifest:
+                    apiVersion: spaces.upbound.io/v1beta1
+                    kind: ControlPlane
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.uid
+                toFieldPath: spec.providerConfigRef.name
+                transforms:
+                  - string:
+                      fmt: '%s-space'
+                      type: Format
+                    type: string
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.crossplane
+                toFieldPath: spec.forProvider.manifest.spec.crossplane
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.group
+                toFieldPath: spec.forProvider.manifest.metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: spec.forProvider.manifest.metadata.name
+
+          - name: usage-space-providerconfig
+            base:
+              apiVersion: apiextensions.crossplane.io/v1alpha1
+              kind: Usage
+              spec:
+                by:
+                  apiVersion: kubernetes.crossplane.io/v1alpha2
+                  kind: Object
+                  resourceSelector:
+                    matchControllerRef: true
+                    matchLabels:
+                      type: controlplane
+                of:
+                  apiVersion: kubernetes.crossplane.io/v1alpha1
+                  kind: ProviderConfig
+                  resourceSelector:
+                    matchControllerRef: true
+                    matchLabels:
+                      type: space
+            readinessChecks:
+              - type: None
+
+          - name: usage-ctp-providerconfig
+            base:
+              apiVersion: apiextensions.crossplane.io/v1alpha1
+              kind: Usage
+              spec:
+                by:
+                  apiVersion: kubernetes.crossplane.io/v1alpha1
+                  kind: Object
+                  resourceSelector:
+                    matchControllerRef: true
+                    matchLabels:
+                      type: controlplane
+                of:
+                  apiVersion: kubernetes.crossplane.io/v1alpha1
+                  kind: ProviderConfig
+                  resourceSelector:
+                    matchControllerRef: true
+                    matchLabels:
+                      type: ctp
+            readinessChecks:
+              - type: None
+
+          - name: usage-space-kubeconfig
+            base:
+              apiVersion: apiextensions.crossplane.io/v1alpha1
+              kind: Usage
+              spec:
+                by:
+                  apiVersion: kubernetes.crossplane.io/v1alpha2
+                  kind: Object
+                  resourceSelector:
+                    matchControllerRef: true
+                    matchLabels:
+                      type: controlplane
+                of:
+                  apiVersion: kubernetes.crossplane.io/v1alpha2
+                  kind: Object
+                  resourceSelector:
+                    matchControllerRef: true
+                    matchLabels:
+                      type: space-kubeconfig
+            readinessChecks:
+              - type: None
+
+          - name: usage-ctp-kubeconfig
+            base:
+              apiVersion: apiextensions.crossplane.io/v1alpha1
+              kind: Usage
+              spec:
+                by:
+                  apiVersion: kubernetes.crossplane.io/v1alpha2
+                  kind: Object
+                  resourceSelector:
+                    matchControllerRef: true
+                    matchLabels:
+                      type: controlplane
+                of:
+                  apiVersion: kubernetes.crossplane.io/v1alpha2
+                  kind: Object
+                  resourceSelector:
+                    matchControllerRef: true
+                    matchLabels:
+                      type: ctp-kubeconfig
+            readinessChecks:
+              - type: None
