@@ -1,0 +1,27 @@
+apiVersion: meta.dev.upbound.io/v1alpha1
+kind: Project
+metadata:
+  name: configuration-upbound-bootstrap
+spec:
+  architectures:
+  - amd64
+  - arm64
+  dependsOn:
+  - function: xpkg.upbound.io/crossplane-contrib/function-auto-ready
+    version: '>=v0.0.0'
+  - function: xpkg.upbound.io/crossplane-contrib/function-extra-resources
+    version: v0.0.3
+  - provider: xpkg.upbound.io/upbound/provider-aws-iam
+    version: v1
+  - provider: xpkg.upbound.io/upbound/provider-aws-secretsmanager
+    version: v1
+  - provider: xpkg.upbound.io/upbound/provider-kubernetes
+    # renovate: datasource=github-releases depName=upbound/provider-kubernetes
+    version: v0.16.2
+  description: This is where you can describe your project.
+  license: Apache-2.0
+  maintainer: Upbound User <user@example.com>
+  readme: |
+    This is where you can add a readme for your project.
+  repository: xpkg.upbound.io/solutions/configuration-upbound-bootstrap
+  source: github.com/upbound/project-template

@@ -1,0 +1,62 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xenvironments.sa.upbound.io
+spec:
+  group: sa.upbound.io
+  names:
+    categories:
+    - crossplane
+    kind: XEnvironment
+    plural: xenvironments
+  versions:
+  - name: v1
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        description: XEnvironment is the Schema for the XEnvironment API.
+        properties:
+          spec:
+            description: XEnvironmentSpec defines the desired state of XEnvironment.
+            type: object
+            properties:
+              parameters:
+                type: object
+                properties:
+                  upbound:
+                    type: object
+                    properties:
+                      org:
+                        type: string
+                      group:
+                        type: string
+                      ctp:
+                        type: string
+                      space:
+                        type: string
+                      tokenSecretRef:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          key:
+                            type: string
+                      # workaround until iam role is supported
+                  aws:
+                    type: object
+                    properties:
+                      accountId:
+                        type: string
+                      region:
+                        type: string
+                      oidcProviderArn:
+                        type: string
+                      secretsManagerSecretArn:
+                        type: string
+          status:
+            description: XEnvironmentStatus defines the observed state of XEnvironment.
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
