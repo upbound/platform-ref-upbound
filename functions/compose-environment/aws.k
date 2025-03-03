@@ -55,23 +55,22 @@ getItems = lambda awsParams: AWSInput -> [any] {[
         spec = {
             deletionPolicy = "Orphan"
             forProvider = {
-                policy = """
-                  {{
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {{
-                            "Effect": "Allow",
-                            "Action": [
-                                "secretsmanager:GetSecretValue",
-                                "secretsmanager:DescribeSecret",
-                                "secretsmanager:ListSecretVersionIds"
-                            ],
-                            "Resource": [
-                                "arn:aws:secretsmanager:{}:{}:secret:{}-*"
-                            ]
-                        }}
-                    ]
-                }}""".format(awsParams.region, awsParams.accountId, awsParams.namePrefix)
+                policy = """{{
+    "Version": "2012-10-17",
+    "Statement": [
+        {{
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:ListSecretVersionIds"
+            ],
+            "Resource": [
+                "arn:aws:secretsmanager:{}:{}:secret:{}-*"
+            ]
+        }}
+    ]
+}}""".format(awsParams.region, awsParams.accountId, awsParams.namePrefix)
             }
             providerConfigRef = {
                 name = awsParams.envName
@@ -171,26 +170,24 @@ getItems = lambda awsParams: AWSInput -> [any] {[
         spec = {
             deletionPolicy = "Orphan"
             forProvider = {
-                assumeRolePolicy = """
-                   {{
-                        "Version": "2012-10-17",
-                        "Statement": [
-                            {{
-                                "Effect": "Allow",
-                                "Principal": {{
-                                    "Federated": "arn:aws:iam:::oidc-provider/proidc.upbound.io"
-                                }},
-                                "Action": "sts:AssumeRoleWithWebIdentity",
-                                "Condition": {{
-                                    "StringEquals": {{
-                                        "proidc.upbound.io:sub": "mcp:{}/{}:provider:provider-aws",
-                                        "proidc.upbound.io:aud": "sts.amazonaws.com"
-                                    }}
-                                }}
-                            }}
-                        ]
-                   }}
-                """.format(awsParams.upboundOrg, awsParams.envName)
+                assumeRolePolicy = """{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam:::oidc-provider/proidc.upbound.io"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "proidc.upbound.io:sub": "mcp:upboundcare/solutions-non-prod-example:provider:provider-aws",
+                    "proidc.upbound.io:aud": "sts.amazonaws.com"
+                }
+            }
+        }
+    ]
+}"""
             }
             providerConfigRef = {
                 name = awsParams.envName

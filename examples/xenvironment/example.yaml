@@ -1,7 +1,7 @@
 apiVersion: sa.upbound.io/v1
 kind: XEnvironment
 metadata:
-  name: staging
+  name: example
 spec:
   parameters:
     upbound:
@@ -12,7 +12,7 @@ spec:
       space: "upbound-aws-us-east-1"
     aws:
       # @TODO can read from aws api, is it worth it?
-      accountId: "609897127049"
+      accountId: "12345678912"
       region: us-east-1
-      oidcProviderArn: "arn:aws:iam::609897127049:oidc-provider/proidc.upbound.io"
-      secretsManagerSecretArn: "arn:aws:secretsmanager:us-east-1:609897127049:secret:upboundcare-solutions-non-prod-staging-staging-config-q8cwx0"
+      # oidcProviderArn: "arn:aws:iam::12345678912:oidc-provider/proidc.upbound.io"
+      # secretsManagerSecretArn: "arn:aws:secretsmanager:us-east-1:12345678912:secret:upboundcare-solutions-non-prod-staging-staging-config-q8cwx0"
