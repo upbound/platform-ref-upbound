@@ -1,4 +1,3 @@
-import models.io.upbound.aws.v1beta1 as awsv1beta1
 import models.io.upbound.aws.iam.v1beta1 as iamv1beta1
 import models.io.upbound.aws.secretsmanager.v1beta1 as secretsmanagerv1beta1
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
@@ -7,41 +6,25 @@ _metadata = lambda name: str -> any {
     { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
 }
 
-schema AWSInput:
+schema AWSSecretStoreInput:
     accountId: str
-    awsCredsSecretRef: awsv1beta1.AwsUpboundIoV1beta1ProviderConfigSpecCredentialsSecretRef
-    namePrefix: str
-    region: str
+    deletionPolicy: str
     envName: str
-    upboundOrg: str
-    rootCtp: str
+    namePrefix: str
     ocds: any
-    oidcProviderArn?: str
+    region: str
+    rootCtp: str
     secretsManagerSecretArn?: str
 
 
-getItems = lambda awsParams: AWSInput -> [any] {[
-    awsv1beta1.ProviderConfig{
-        metadata = _metadata("awsProviderConfig") | {
-            name = awsParams.envName
-            annotations = {
-              "krm.kcl.dev/ready" = "True"
-            }
-        }
-        spec = {
-            credentials = {
-                source = "Secret"
-                secretRef = awsParams.awsCredsSecretRef
-            }
-        }
-    }
+getSecretStoreItems = lambda awsParams: AWSSecretStoreInput -> [any] {[
     ### Needed until SharedSecretStore supports IAM Roles ###
     iamv1beta1.User {
         metadata = _metadata("iamUserSecretRead") | {
             name = "{}-secrets-read".format(awsParams.namePrefix)
         }
         spec = {
-            deletionPolicy = "Orphan"
+            deletionPolicy = awsParams.deletionPolicy
             forProvider = {}
             providerConfigRef = {
                 name = awsParams.envName
@@ -53,7 +36,7 @@ getItems = lambda awsParams: AWSInput -> [any] {[
             name = "{}-secrets-read".format(awsParams.namePrefix)
         }
         spec = {
-            deletionPolicy = "Orphan"
+            deletionPolicy = awsParams.deletionPolicy
             forProvider = {
                 policy = """{{
     "Version": "2012-10-17",
@@ -82,7 +65,7 @@ getItems = lambda awsParams: AWSInput -> [any] {[
             name = "{}-secrets-read".format(awsParams.namePrefix)
         }
         spec = {
-            deletionPolicy = "Orphan"
+            deletionPolicy = awsParams.deletionPolicy
             forProvider = {
                 policyArnSelector = {
                     matchControllerRef = True
@@ -101,6 +84,7 @@ getItems = lambda awsParams: AWSInput -> [any] {[
             name = "{}-secrets-read".format(awsParams.namePrefix)
         }
         spec = {
+            deletionPolicy = awsParams.deletionPolicy
             forProvider = {
                 userSelector = {
                     matchControllerRef = True
@@ -121,7 +105,7 @@ getItems = lambda awsParams: AWSInput -> [any] {[
             name = "{}-secrets-read-access-key-observed".format(awsParams.envName)
         }
         spec = {
-            deletionPolicy = "Orphan"
+            deletionPolicy = awsParams.deletionPolicy
             forProvider = {
                 manifest = {
                     apiVersion = "v1"
@@ -144,7 +128,7 @@ getItems = lambda awsParams: AWSInput -> [any] {[
             name = "{}-secrets-read-access-key".format(awsParams.envName)
         }
         spec = {
-            deletionPolicy = "Orphan"
+            deletionPolicy = awsParams.deletionPolicy
             forProvider = {
                 manifest = {
                     apiVersion = "v1"
@@ -162,74 +146,6 @@ getItems = lambda awsParams: AWSInput -> [any] {[
         }
     }
     ### end iam user workaroung ###
-
-    iamv1beta1.Role {
-        metadata = _metadata("iamAdminRole") | {
-            name = "{}-admin".format(awsParams.namePrefix)
-        }
-        spec = {
-            deletionPolicy = "Orphan"
-            forProvider = {
-                assumeRolePolicy = """{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "Federated": "arn:aws:iam:::oidc-provider/proidc.upbound.io"
-            },
-            "Action": "sts:AssumeRoleWithWebIdentity",
-            "Condition": {
-                "StringEquals": {
-                    "proidc.upbound.io:sub": "mcp:upboundcare/solutions-non-prod-example:provider:provider-aws",
-                    "proidc.upbound.io:aud": "sts.amazonaws.com"
-                }
-            }
-        }
-    ]
-}"""
-            }
-            providerConfigRef = {
-                name = awsParams.envName
-            }
-        }
-    }
-    iamv1beta1.RolePolicyAttachment {
-        metadata = _metadata("iamAdminRoleAttach") | {
-            name = "{}-admin".format(awsParams.namePrefix)
-        }
-        spec = {
-            deletionPolicy = "Orphan"
-            forProvider = {
-                roleSelector = {
-                    matchControllerRef = True
-                }
-                policyArn = "arn:aws:iam::aws:policy/AdministratorAccess"
-            }
-            providerConfigRef = {
-                name = awsParams.envName
-            }
-        }
-    }
-    iamv1beta1.OpenIDConnectProvider {
-        metadata = _metadata("upboundOidcProvider") | {
-            name = "{}-oidc-provider".format(awsParams.namePrefix)
-            annotations = {
-                if awsParams.oidcProviderArn:
-                    'crossplane.io/external-name' = awsParams.oidcProviderArn
-            }
-        }
-        spec = {
-            deletionPolicy = "Orphan"
-            forProvider = {
-                clientIdList = ["sts.amazonaws.com"]
-                url = "https://proidc.upbound.io"
-            }
-            providerConfigRef = {
-                name = awsParams.envName
-            }
-        }
-    }
     secretsmanagerv1beta1.Secret {
         metadata = _metadata("secretsmanagerSecret") | {
             name = "{}-secretsmanager-secret".format(awsParams.namePrefix)
@@ -239,10 +155,12 @@ getItems = lambda awsParams: AWSInput -> [any] {[
             }
         }
         spec = {
-            deletionPolicy = "Orphan"
+            deletionPolicy = awsParams.deletionPolicy
             forProvider = {
                 name = "{}-config".format(awsParams.namePrefix)
                 region = awsParams.region
+                if deletionPolicy == "Delete":
+                    forceOverwriteReplicaSecret = True
             }
             providerConfigRef = {
                 name = awsParams.envName

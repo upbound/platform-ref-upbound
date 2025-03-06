@@ -4,15 +4,31 @@ metadata:
   name: example
 spec:
   parameters:
-    upbound:
-      org: upboundcare
-      group: solutions-non-prod
-      ctp: bootstrap
-      # @TODO ready somehow from initial kubeconfig
-      space: "upbound-aws-us-east-1"
+    # Controls what happens to resources when this XEnvironment is deleted
+    # Options: Orphan (default) or Delete
+    deletionPolicy: Orphan
+    # AWS account configuration
     aws:
-      # @TODO can read from aws api, is it worth it?
+      # The AWS account ID where resources will be provisioned
       accountId: "12345678912"
+      # Reference to the secret containing AWS credentials
+      credsSecretRef:
+        name: aws-creds-example
+        namespace: default
+      # AWS region for resource provisioning
       region: us-east-1
+      # Optional: ARN of an existing OIDC provider (if you don't want to create a new one)
       # oidcProviderArn: "arn:aws:iam::12345678912:oidc-provider/proidc.upbound.io"
-      # secretsManagerSecretArn: "arn:aws:secretsmanager:us-east-1:12345678912:secret:upboundcare-solutions-non-prod-staging-staging-config-q8cwx0"
+      # Optional: ARN of an existing Secrets Manager secret (if you don't want to create a new one)
+      # secretsManagerSecretArn: "arn:aws:secretsmanager:us-east-1:12345678912:secret:example-config-abcde"
+    upbound:
+      initKubeconfigSecretRef:
+        name: init-kubeconfig
+      tokenSecretRef:
+        name: upbound-token
+status:
+  upbound:
+    bootstrapCtp: bootstrap
+    bootstrapGroup: solutions-non-prod
+    org: upbound
+    spaceHost: upbound-aws-us-east-1.space.mxe.upbound.io

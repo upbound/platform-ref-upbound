@@ -21,41 +21,100 @@ spec:
             type: object
             properties:
               parameters:
+                description: Configuration parameters for the environment.
                 type: object
                 properties:
-                  upbound:
-                    type: object
-                    properties:
-                      org:
-                        type: string
-                      group:
-                        type: string
-                      ctp:
-                        type: string
-                      space:
-                        type: string
-                      tokenSecretRef:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          key:
-                            type: string
-                      # workaround until iam role is supported
+                  deletionPolicy:
+                    description: Determines whether all managed resources will be deleted or orphaned when the XEnvironment is deleted. Options are Delete or Orphan. Default is Orphan.
+                    type: string
+                    enum:
+                      - Delete
+                      - Orphan
+                    default: Orphan
                   aws:
+                    description: AWS-specific configuration for the environment.
                     type: object
                     properties:
                       accountId:
+                        description: The AWS account ID where resources will be provisioned.
                         type: string
+                      credsSecretRef:
+                        description: Reference to the secret containing AWS credentials.
+                        type: object
+                        properties:
+                          name:
+                            description: The name of the secret containing AWS credentials.
+                            type: string
+                          namespace:
+                            description: The namespace of the secret containing AWS credentials.
+                            type: string
                       region:
+                        description: The AWS region where resources will be provisioned.
                         type: string
                       oidcProviderArn:
+                        description: ARN of an existing AWS OIDC provider to use instead of creating a new one.
                         type: string
                       secretsManagerSecretArn:
+                        description: ARN of an existing AWS Secrets Manager secret to use instead of creating a new one.
                         type: string
+                    required:
+                      - accountId
+                      - credsSecretRef
+                      - region
+                  upbound:
+                    type: object
+                    properties:
+                      tokenSecretRef:
+                        type: object
+                        properties:
+                          key:
+                            type: string
+                            default: "token"
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                            default: "default"
+                        required:
+                          - name
+                      initKubeconfigSecretRef:
+                        type: object
+                        description: The kubeconfig used to initialize the environment.
+                        properties:
+                          key:
+                            type: string
+                            default: "kubeconfig"
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                            default: "default"
+                        required:
+                          - name
+                    required:
+                      - initKubeconfigSecretRef
+                      - tokenSecretRef
+
           status:
             description: XEnvironmentStatus defines the observed state of XEnvironment.
             type: object
+            properties:
+              upbound:
+                description: Upbound-specific status information.
+                type: object
+                properties:
+                  spaceHost:
+                    description: The hostname of the Upbound Space where this environment is deployed.
+                    type: string
+                  bootstrapGroup:
+                    description: The name of the bootstrap group used in Upbound Space.
+                    type: string
+                  bootstrapCtp:
+                    description: The name of the bootstrap control plane used in Upbound Space.
+                    type: string
+                  org:
+                    description: The Upbound organization name.
+                    type: string
         required:
         - spec
         type: object
