@@ -65,7 +65,7 @@ jobs:
           path: _output/**
 
       - name: Login to Upbound
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         if: env.XPKG_ACCESS_ID != ''
         with:
           registry: xpkg.upbound.io
