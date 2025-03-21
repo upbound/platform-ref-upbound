@@ -26,6 +26,7 @@ import aws.providerConfig as awsProviderConfig
 import aws.secretStore as awsSS
 import aws.crossplaneRole as awsXPRole
 import pKubernetesHelper
+import teamRobot
 
 oxr = option("params").oxr # observed composite resource
 ocds = option("params").ocds # observed composed resources
@@ -33,10 +34,8 @@ dxr = option("params").dxr # desired composite resource
 dcds = option("params").dcds # desired composed resources
 
 # workaround for https://cloud-native.slack.com/archives/C05TC96NWN8/p1736885830442079
-oxrMeta =  oxr.metadata
-oxrSpec =  oxr.spec
-#oxrMeta =  xenvironment.XEnvironment.metadata{**oxr.metadata}
-#oxrSpec =  xenvironment.XEnvironment.spec{**oxr.spec}
+oxrMeta =  sav1.XEnvironment.metadata{**oxr.metadata}
+oxrSpec =  sav1.XEnvironment.spec{**oxr.spec}
 
 _metadata = lambda name: str -> any {
     { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
@@ -281,6 +280,17 @@ if _initReady:
         }
 
     ] + \
+    teamRobot.teamWithRobot(teamRobot.TeamWithRobotInput{
+        group = envGroupName
+        org = _oxrStatusUpbound.org
+        secretDestProviderConfigName = "{}-ctp".format(oxrMeta.name)
+        spaceProviderConfigName = "{}-space".format(oxrMeta.name)
+        tokenSecretRef = teamRobot.TeamRobotTokenSecretRef{
+            name = oxrSpec.parameters.upbound.tokenSecretRef.name
+            namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
+            key = oxrSpec.parameters.upbound.tokenSecretRef.key
+        }
+    }) + \
     pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
         # controlplane level providerconfig for provider-kubernetes
         spaceHost = _oxrStatusUpbound.spaceHost

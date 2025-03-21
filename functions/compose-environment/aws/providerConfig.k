@@ -8,7 +8,6 @@ schema AWSProviderConfigInput:
     awsCredsSecretRef: awsv1beta1.AwsUpboundIoV1beta1ProviderConfigSpecCredentialsSecretRef
     envName: str
 
-
 getProviderConfig = lambda awsParams: AWSProviderConfigInput -> [any] {[
     awsv1beta1.ProviderConfig{
         metadata = _metadata("awsProviderConfig") | {

@@ -99,29 +99,6 @@ getSecretStoreItems = lambda awsParams: AWSSecretStoreInput -> [any] {[
             }
         }
     }
-    # observe secret in order to copy it to environment
-    kubernetesv1alpha2.Object{
-        metadata = _metadata("observedIamUserKeySecret") | {
-            name = "{}-secrets-read-access-key-observed".format(awsParams.envName)
-        }
-        spec = {
-            deletionPolicy = awsParams.deletionPolicy
-            forProvider = {
-                manifest = {
-                    apiVersion = "v1"
-                    kind = "Secret"
-                    metadata = {
-                        name = "{}-secrets-read-access-key".format(awsParams.envName)
-                        namespace = "default"
-                    }
-                }
-            }
-            providerConfigRef = {
-                name = "{}-ctp".format(awsParams.rootCtp)
-            }
-            managementPolicies = ["Observe"]
-        }
-    }
     # copy the iam access key secret
     kubernetesv1alpha2.Object{
         metadata = _metadata("envIamUserKeySecret") | {
@@ -137,12 +114,23 @@ getSecretStoreItems = lambda awsParams: AWSSecretStoreInput -> [any] {[
                         name = "{}-secrets-read-access-key".format(awsParams.envName)
                         namespace = awsParams.envName
                     }
-                    data = awsParams.ocds.observedIamUserKeySecret?.Resource?.status?.atProvider?.manifest?.data
                 }
             }
             providerConfigRef = {
                 name = "{}-group".format(awsParams.envName)
             }
+            references = [
+                {
+                    patchesFrom = {
+                        apiVersion = "v1"
+                        kind = "Secret"
+                        name = "{}-secrets-read-access-key".format(awsParams.envName)
+                        namespace = "default"
+                        fieldPath = "data"
+                    }
+                    toFieldPath = "data"
+                }
+            ]
         }
     }
     ### end iam user workaroung ###

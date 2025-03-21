@@ -111,16 +111,6 @@ _items = [
                 }
                 kubernetesv1alpha2.Object{
                     metadata = {
-                        name = "solutions-non-prod-example-secrets-read-access-key-observed"
-                    }
-                    spec = {
-                        deletionPolicy = "Delete"
-                        forProvider.manifest = {}
-                        managementPolicies = ["Observe"]
-                    }
-                }
-                kubernetesv1alpha2.Object{
-                    metadata = {
                         name = "example-ses"
                     }
                     spec = {
