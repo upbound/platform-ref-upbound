@@ -11,12 +11,14 @@ The Bootstrap Configuration Package provides an `XEnvironment` custom resource t
 - Cross-service authentication with OIDC
 - Secret management between AWS and Upbound
 - Provider configurations for Kubernetes resources
+- Teams, robots, and robot tokens for automation
 
 ## Features
 
 - **Declarative Environment Management**: Define your entire environment as code
 - **AWS Integration**: Automated setup of IAM roles, policies, and OIDC authentication
 - **Secret Management**: Secure transfer of credentials between AWS and Upbound
+- **Team & Robot Automation**: Create teams, robots, and tokens for automated workflows
 - **GitOps Ready**: Designed for continuous delivery workflows
 
 ## Usage
@@ -97,55 +99,8 @@ EOF
    *This creates a special kubeconfig that allows Crossplane's Kubernetes provider to interact with your control plane. It references the token created in the previous step.*
 
 ```bash
-cat <<EOF | kubectl apply -f -
-  apiVersion: v1
-  kind: Secret
-  metadata:
-    name: bootstrap-kubeconfig
-    namespace: default
-  type: Opaque
-  stringData:
-    kubeconfig: |
-      apiVersion: v1
-      clusters:
-      - cluster:
-          insecure-skip-tls-verify: true
-          server: https://${UPBOUND_SPACE}.space.mxe.upbound.io/apis/spaces.upbound.io/v1beta1/namespaces/${UPBOUND_GROUP}/controlplanes/${UPBOUND_CTP}/k8s
-        name: upbound
-      contexts:
-      - context:
-          cluster: upbound
-          extensions:
-          - extension:
-              apiVersion: upbound.io/v1alpha1
-              kind: SpaceExtension
-              spec:
-                cloud:
-                  organization: ${UPBOUND_ORG}
-            name: spaces.upbound.io/space
-          namespace: default
-          user: upbound
-        name: upbound
-      current-context: upbound
-      kind: Config
-      preferences: {}
-      users:
-      - name: upbound
-        user:
-          exec:
-            apiVersion: client.authentication.k8s.io/v1
-            args:
-            - organization
-            - token
-            command: up
-            env:
-            - name: ORGANIZATION
-              value: ${UPBOUND_ORG}
-            - name: UP_PROFILE
-              value: default
-            interactiveMode: IfAvailable
-            provideClusterInfo: false
-EOF
+up ctx . -f - > kubeconfig.yaml
+kubectl -n default create secret generic bootstrap-kubeconfig --from-file=kubeconfig=kubeconfig.yaml
 ```
 
 5. Install the configuration:
@@ -172,7 +127,7 @@ cat <<EOF | kubectl apply -f -
   apiVersion: kubernetes.crossplane.io/v1alpha1
   kind: ProviderConfig
   metadata:
-    name: bootstrap-ctp
+    name: ${UPBOUND_CTP}-ctp
   spec:
     credentials:
       source: Secret
@@ -231,6 +186,18 @@ EOF
 ## Architecture
 
 ![Architecture Diagram](./assets/arch.svg)
+
+## Teams, Robots, and Tokens
+
+The bootstrap configuration automatically creates:
+
+1. **Team** - A dedicated team for the environment with the same name as the environment group
+2. **Robot** - A service account robot associated with your organization
+3. **Robot Token** - A token for the robot to authenticate with Upbound APIs
+4. **Robot Team Membership** - Associates the robot with the team for proper permissions
+5. **Admin Role Binding** - Grants the team admin rights on the environment group
+
+These resources enable automation through GitOps and CI/CD pipelines, allowing programmatic interaction with control planes. The team structure ensures proper access control and permission management for your environment.
 
 ## Development
 

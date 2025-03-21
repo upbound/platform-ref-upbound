@@ -103,7 +103,6 @@ _items = [
                         forProvider = {
                             manifest = {
                                 apiVersion = "v1"
-                                data = None
                                 kind = "Secret"
                                 metadata = {
                                     name = "solutions-non-prod-example-secrets-read-access-key"
@@ -281,31 +280,6 @@ _items = [
                         providerConfigRef: {
                             name: "solutions-non-prod-example"
                         }
-                    }
-                }
-                kubernetesv1alpha2.Object{
-                    metadata = {
-                        name = "solutions-non-prod-example-secrets-read-access-key-observed"
-                    }
-                    spec = {
-                        deletionPolicy = "Orphan"
-                        forProvider = {
-                            manifest = {
-                                apiVersion = "v1"
-                                kind = "Secret"
-                                metadata = {
-                                    name = "solutions-non-prod-example-secrets-read-access-key"
-                                    namespace = "default"
-                                }
-                            }
-                        }
-                        managementPolicies = [
-                            "Observe"
-                        ]
-                        providerConfigRef = {
-                            name = "bootstrap-ctp"
-                        }
-                        watch = False
                     }
                 }
                 kubernetesv1alpha2.Object{
@@ -690,6 +664,259 @@ _items = [
                                 }
                             }
                         }
+                    }
+                }
+                # Team and robot objects
+                {
+                    apiVersion = "upbound.io/v1alpha1"
+                    kind = "ProviderConfig"
+                    metadata = {
+                        annotations = {
+                            "crossplane.io/composition-resource-name" = "providerConfigUpbound"
+                        }
+                        generateName = "example-"
+                        labels = {
+                            "crossplane.io/composite" = "example"
+                        }
+                        name = "solutions-non-prod-example"
+                        ownerReferences = [
+                            {
+                                apiVersion = "sa.upbound.io/v1"
+                                blockOwnerDeletion = True
+                                controller = True
+                                kind = "XEnvironment"
+                                name = "example"
+                                uid = ""
+                            }
+                        ]
+                    }
+                    spec = {
+                        credentials = {
+                            secretRef = {
+                                key = "token"
+                                name = "upbound-token"
+                                namespace = "default"
+                            }
+                            source = "Secret"
+                        }
+                        organization = "upbound"
+                    }
+                }
+                {
+                    apiVersion = "iam.upbound.io/v1alpha1"
+                    kind = "Team"
+                    metadata = {
+                        annotations = {
+                            "crossplane.io/composition-resource-name" = "envTeam"
+                        }
+                        generateName = "example-"
+                        labels = {
+                            "crossplane.io/composite" = "example"
+                        }
+                        name = "solutions-non-prod-example-team"
+                        ownerReferences = [
+                            {
+                                apiVersion = "sa.upbound.io/v1"
+                                blockOwnerDeletion = True
+                                controller = True
+                                kind = "XEnvironment"
+                                name = "example"
+                                uid = ""
+                            }
+                        ]
+                    }
+                    spec = {
+                        deletionPolicy = "Delete"
+                        forProvider = {
+                            name = "solutions-non-prod-example"
+                            organizationName = "upbound"
+                        }
+                        managementPolicies = [
+                            "*"
+                        ]
+                        providerConfigRef = {
+                            name = "solutions-non-prod-example"
+                        }
+                    }
+                }
+                {
+                    apiVersion = "iam.upbound.io/v1alpha1"
+                    kind = "Token"
+                    metadata = {
+                        annotations = {
+                            "crossplane.io/composition-resource-name" = "envRobotToken"
+                        }
+                        generateName = "example-"
+                        labels = {
+                            "crossplane.io/composite" = "example"
+                        }
+                        name = "solutions-non-prod-example-robot-token"
+                        ownerReferences = [
+                            {
+                                apiVersion = "sa.upbound.io/v1"
+                                blockOwnerDeletion = True
+                                controller = True
+                                kind = "XEnvironment"
+                                name = "example"
+                                uid = ""
+                            }
+                        ]
+                    }
+                    spec = {
+                        deletionPolicy = "Delete"
+                        forProvider = {
+                            name = "solutions-non-prod-example"
+                            owner = {
+                                idRef = {
+                                    name = "solutions-non-prod-example-robot"
+                                }
+                                $type = "robots"
+                            }
+                        }
+                        managementPolicies = [
+                            "*"
+                        ]
+                        providerConfigRef = {
+                            name = "solutions-non-prod-example"
+                        }
+                        writeConnectionSecretToRef = {
+                            name = "solutions-non-prod-example-robot-token"
+                            namespace = "default"
+                        }
+                    }
+                }
+                {
+                    apiVersion = "iam.upbound.io/v1alpha1"
+                    kind = "Robot"
+                    metadata = {
+                        annotations = {
+                            "crossplane.io/composition-resource-name" = "envRobot"
+                        }
+                        generateName = "example-"
+                        labels = {
+                            "crossplane.io/composite" = "example"
+                        }
+                        name = "solutions-non-prod-example-robot"
+                        ownerReferences = [
+                            {
+                                apiVersion = "sa.upbound.io/v1"
+                                blockOwnerDeletion = True
+                                controller = True
+                                kind = "XEnvironment"
+                                name = "example"
+                                uid = ""
+                            }
+                        ]
+                    }
+                    spec = {
+                        deletionPolicy = "Delete"
+                        forProvider = {
+                            description = "Robot for solutions-non-prod-example"
+                            name = "solutions-non-prod-example-bot"
+                            owner = {
+                                name = "upbound"
+                            }
+                        }
+                        managementPolicies = [
+                            "*"
+                        ]
+                        providerConfigRef = {
+                            name = "solutions-non-prod-example"
+                        }
+                    }
+                }
+                {
+                    apiVersion = "iam.upbound.io/v1alpha1"
+                    kind = "RobotTeamMembership"
+                    metadata = {
+                        annotations = {
+                            "crossplane.io/composition-resource-name" = "envRobotTeamMembership"
+                        }
+                        generateName = "example-"
+                        labels = {
+                            "crossplane.io/composite" = "example"
+                        }
+                        name = "solutions-non-prod-example-robot-team-membership"
+                        ownerReferences = [
+                            {
+                                apiVersion = "sa.upbound.io/v1"
+                                blockOwnerDeletion = True
+                                controller = True
+                                kind = "XEnvironment"
+                                name = "example"
+                                uid = ""
+                            }
+                        ]
+                    }
+                    spec = {
+                        deletionPolicy = "Delete"
+                        forProvider = {
+                            robotIdRef = {
+                                name = "solutions-non-prod-example-robot"
+                            }
+                            teamIdRef = {
+                                name = "solutions-non-prod-example-team"
+                            }
+                        }
+                        managementPolicies = [
+                            "*"
+                        ]
+                        providerConfigRef = {
+                            name = "solutions-non-prod-example"
+                        }
+                    }
+                }
+                kubernetesv1alpha2.Object{
+                    metadata = {
+                        annotations = {
+                            "crossplane.io/composition-resource-name" = "robotTokenEnvCtpSecret"
+                        }
+                        generateName = "example-"
+                        labels = {
+                            "crossplane.io/composite" = "example"
+                        }
+                        name = "solutions-non-prod-example-rt-secret"
+                        ownerReferences = [
+                            {
+                                apiVersion = "sa.upbound.io/v1"
+                                blockOwnerDeletion = True
+                                controller = True
+                                kind = "XEnvironment"
+                                name = "example"
+                                uid = ""
+                            }
+                        ]
+                    }
+                    spec = {
+                        deletionPolicy = "Delete"
+                        forProvider = {
+                            manifest = {
+                                apiVersion = "v1"
+                                kind = "Secret"
+                                metadata = {
+                                    namespace = "default"
+                                }
+                            }
+                        }
+                        managementPolicies = [
+                            "*"
+                        ]
+                        providerConfigRef = {
+                            name = "example-ctp"
+                        }
+                        references = [
+                            {
+                                patchesFrom = {
+                                    apiVersion = "v1"
+                                    fieldPath = "data.token"
+                                    kind = "Secret"
+                                    name = "solutions-non-prod-example-robot-token"
+                                    namespace = "default"
+                                }
+                                toFieldPath = "data.token"
+                            }
+                        ]
+                        watch = False
                     }
                 }
             ]

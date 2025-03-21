@@ -26,6 +26,7 @@ import aws.providerConfig as awsProviderConfig
 import aws.secretStore as awsSS
 import aws.crossplaneRole as awsXPRole
 import pKubernetesHelper
+import teamRobot
 
 oxr = option("params").oxr # observed composite resource
 ocds = option("params").ocds # observed composed resources
@@ -281,6 +282,17 @@ if _initReady:
         }
 
     ] + \
+    teamRobot.teamWithRobot(teamRobot.TeamWithRobotInput{
+        group = envGroupName
+        org = _oxrStatusUpbound.org
+        secretDestProviderConfigName = "{}-ctp".format(oxrMeta.name)
+        spaceProviderConfigName = "{}-space".format(oxrMeta.name)
+        tokenSecretRef = teamRobot.TeamRobotTokenSecretRef{
+            name = oxrSpec.parameters.upbound.tokenSecretRef.name
+            namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
+            key = oxrSpec.parameters.upbound.tokenSecretRef.key
+        }
+    }) + \
     pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
         # controlplane level providerconfig for provider-kubernetes
         spaceHost = _oxrStatusUpbound.spaceHost

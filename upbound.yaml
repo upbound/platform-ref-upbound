@@ -16,8 +16,10 @@ spec:
   - provider: xpkg.upbound.io/upbound/provider-aws-secretsmanager
     version: v1
   - provider: xpkg.upbound.io/upbound/provider-kubernetes
-    # renovate: datasource=github-releases depName=upbound/provider-kubernetes
-    version: v0.16.2
+    version: v0
+    # renovate: datasource=github-releases depName=upbound/provider-upbound
+  - provider: xpkg.upbound.io/upbound/provider-upbound
+    version: v0.8.0
   description: This is where you can describe your project.
   license: Apache-2.0
   maintainer: Upbound User <user@example.com>
