@@ -1,6 +1,6 @@
 """
 This KCL function implements the core composition logic for XEnvironment resources.
-It automates the creation and management of Upbound Spaces environments with 
+It automates the creation and management of Upbound Spaces environments with
 integrated AWS cloud resources. The function handles:
 - Environment initialization using bootstrap credentials
 - Control plane creation in Upbound Spaces
@@ -11,7 +11,6 @@ integrated AWS cloud resources. The function handles:
 
 import models.io.upbound.sa.v1 as sav1
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
-import spacesModels.v1alpha1 as spacesv1alpha1
 
 # sytem modules
 import base64
@@ -30,7 +29,6 @@ ocds = option("params").ocds # observed composed resources
 dxr = option("params").dxr # desired composite resource
 dcds = option("params").dcds # desired composed resources
 
-# workaround for https://cloud-native.slack.com/archives/C05TC96NWN8/p1736885830442079
 oxrMeta =  sav1.XEnvironment.metadata{**oxr.metadata}
 oxrSpec =  sav1.XEnvironment.spec{**oxr.spec}
 
@@ -113,7 +111,7 @@ _initItems = [
     }
 ]
 
-_mainItems = []
+_upboundItems = []
 _awsItems = []
 
 if _initReady:
@@ -131,7 +129,7 @@ if _initReady:
     envGroupName = "{}-{}".format(_oxrStatusUpbound.bootstrapGroup, oxrMeta.name)
     awsNamePrefix = "{}-{}-{}".format(_oxrStatusUpbound.org, envGroupName, oxrMeta.name)
 
-    _mainItems = [
+    _upboundItems = [
         # Main controlplane for the environment
         kubernetesv1alpha2.Object{
             metadata = _metadata("ctp") | {
@@ -163,97 +161,6 @@ if _initReady:
             }
         }
 
-        # Shared secret which will populate initial secret from cloud into
-        # the main controlplane of the environment
-        kubernetesv1alpha2.Object{
-            metadata = _metadata("sharedExternalSecret") | {
-                name = "{}-ses".format(oxrMeta.name)
-            }
-            spec = {
-                deletionPolicy = oxrSpec.parameters.deletionPolicy
-                forProvider = {
-                    manifest = spacesv1alpha1.SharedExternalSecret{
-                        metadata = {
-                            name = oxrMeta.name
-                            namespace = envGroupName
-                        }
-                        spec = {
-                            controlPlaneSelector = {
-                                names = [oxrMeta.name]
-                            }
-                            namespaceSelector = {
-                                names = ["default"]
-                            }
-                            externalSecretSpec = {
-                                refreshInterval = "1m"
-                                secretStoreRef = {
-                                    name = oxrMeta.name
-                                    kind = "ClusterSecretStore"
-                                }
-                                target = {
-                                    name = oxrMeta.name
-                                }
-                                dataFrom = [{
-                                    extract = {
-                                        key = "{}-config".format(awsNamePrefix)
-                                    }
-                                }]
-                            }
-                        }
-                    }
-                }
-                providerConfigRef = {
-                    name = "{}-group".format(envGroupName)
-                }
-            }
-        }
-
-        # Shared secret store mapped to secret on cloud-provider
-        kubernetesv1alpha2.Object{
-            metadata = _metadata("sharedSecretsStore") | {
-                name = "{}-sss".format(oxrMeta.name)
-            }
-            spec = {
-                deletionPolicy = oxrSpec.parameters.deletionPolicy
-                forProvider = {
-                    manifest = spacesv1alpha1.SharedSecretStore{
-                        metadata = {
-                            name = oxrMeta.name
-                            namespace = envGroupName
-                        }
-                        spec = {
-                            controlPlaneSelector = {
-                                names = [oxrMeta.name]
-                            }
-                            namespaceSelector = {
-                                names = ["default"]
-                            }
-                            provider = {
-                                aws = {
-                                    service = "SecretsManager"
-                                    region = oxrSpec.parameters.aws.region
-                                    auth = {
-                                        secretRef = {
-                                            accessKeyIDSecretRef = {
-                                                name = "{}-secrets-read-access-key".format(envGroupName)
-                                                key = "username"
-                                            }
-                                            secretAccessKeySecretRef = {
-                                                name = "{}-secrets-read-access-key".format(envGroupName)
-                                                key = "password"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                providerConfigRef = {
-                    name = "{}-group".format(envGroupName)
-                }
-            }
-        }
 
         kubernetesv1alpha2.Object{
             metadata = _metadata("envGroup") | {
@@ -277,17 +184,6 @@ if _initReady:
         }
 
     ] + \
-    teamRobot.teamWithRobot(teamRobot.TeamWithRobotInput{
-        group = envGroupName
-        org = _oxrStatusUpbound.org
-        secretDestProviderConfigName = "{}-ctp".format(oxrMeta.name)
-        spaceProviderConfigName = "{}-space".format(oxrMeta.name)
-        tokenSecretRef = teamRobot.TeamRobotTokenSecretRef{
-            name = oxrSpec.parameters.upbound.tokenSecretRef.name
-            namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
-            key = oxrSpec.parameters.upbound.tokenSecretRef.key
-        }
-    }) + \
     pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
         # controlplane level providerconfig for provider-kubernetes
         spaceHost = _oxrStatusUpbound.spaceHost
@@ -300,7 +196,7 @@ if _initReady:
             namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
             key = oxrSpec.parameters.upbound.tokenSecretRef.key
         }
-    })+ \
+    }) + \
     pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
         # environment group level providerconfig for provider-kubernetes
         spaceHost = _oxrStatusUpbound.spaceHost
@@ -312,7 +208,7 @@ if _initReady:
             namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
             key = oxrSpec.parameters.upbound.tokenSecretRef.key
         }
-    })+ \
+    }) + \
     pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
         # space level providerconfig for provider-kubernetes
         spaceHost = _oxrStatusUpbound.spaceHost
@@ -324,34 +220,59 @@ if _initReady:
             namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
             key = oxrSpec.parameters.upbound.tokenSecretRef.key
         }
-    })+ \
-    awsProviderConfig.getProviderConfig(awsProviderConfig.AWSProviderConfigInput{
-        awsCredsSecretRef = {
-            namespace = oxrSpec.parameters.aws.credsSecretRef.namespace
-            name = oxrSpec.parameters.aws.credsSecretRef.name
-            key = "credentials"
-        }
-        envName = envGroupName
-    }) + \
-    awsXPRole.getXPRoleItems(awsXPRole.AWSXPRoleInput{
-        accountId = oxrSpec.parameters.aws.accountId
-        deletionPolicy = oxrSpec.parameters.deletionPolicy
-        envName = envGroupName
-        namePrefix = "{}-{}-{}".format(_oxrStatusUpbound.org, envGroupName, oxrMeta.name)
-        oidcProviderArn: oxrSpec.parameters.aws.oidcProviderArn
-        region = oxrSpec.parameters.aws.region
-        upboundOrg = _oxrStatusUpbound.org
-    }) + \
-    awsSS.getSecretStoreItems(awsSS.AWSSecretStoreInput{
-        accountId = oxrSpec.parameters.aws.accountId
-        deletionPolicy = oxrSpec.parameters.deletionPolicy
-        envName = envGroupName
-        namePrefix = "{}-{}-{}".format(_oxrStatusUpbound.org, envGroupName, oxrMeta.name)
-        ocds = ocds
-        region = oxrSpec.parameters.aws.region
-        rootCtp = _oxrStatusUpbound.bootstrapCtp
-        secretsManagerSecretArn: oxrSpec.parameters.aws.secretsManagerSecretArn
     })
 
+    # If creation of team with robot is enabled
+    if oxrSpec.parameters.upbound.teamWithRobot != Undefined:
+        _upboundItems += teamRobot.teamWithRobot(teamRobot.TeamWithRobotInput{
+            group = envGroupName
+            org = _oxrStatusUpbound.org
+            secretDestProviderConfigName = "{}-ctp".format(oxrMeta.name)
+            spaceProviderConfigName = "{}-space".format(oxrMeta.name)
+            ocds = ocds
+            tokenSecretRef = teamRobot.TeamRobotTokenSecretRef{
+                name = oxrSpec.parameters.upbound.tokenSecretRef.name
+                namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
+                key = oxrSpec.parameters.upbound.tokenSecretRef.key
+            }
+        })
+
+    # If aws features are enabled
+    if oxrSpec.parameters.aws != Undefined:
+        # create providerconfig for aws
+        _awsItems += awsProviderConfig.getProviderConfig(awsProviderConfig.AWSProviderConfigInput{
+            awsCredsSecretRef = {
+                namespace = oxrSpec.parameters.aws.credsSecretRef.namespace
+                name = oxrSpec.parameters.aws.credsSecretRef.name
+                key = "credentials"
+            }
+            envName = envGroupName
+        })
+
+        # if creation of provider role is enabled
+        if oxrSpec.parameters.aws.providerRole != Undefined:
+            _awsItems += awsXPRole.getXPRoleItems(awsXPRole.AWSXPRoleInput{
+                accountId = oxrSpec.parameters.aws.accountId
+                deletionPolicy = oxrSpec.parameters.deletionPolicy
+                envName = envGroupName
+                namePrefix = "{}-{}-{}".format(_oxrStatusUpbound.org, envGroupName, oxrMeta.name)
+                oidcProviderArn: oxrSpec.parameters.aws?.providerRole?.oidcProviderArn
+                region = oxrSpec.parameters.aws.region
+                upboundOrg = _oxrStatusUpbound.org
+            })
+
+        # if creation of shared secret is enabled
+        if oxrSpec.parameters.aws.sharedSecret != Undefined:
+            _awsItems += awsSS.getSecretStoreItems(awsSS.AWSSecretStoreInput{
+                accountId = oxrSpec.parameters.aws.accountId
+                deletionPolicy = oxrSpec.parameters.deletionPolicy
+                ctpName = oxrMeta.name
+                envName = envGroupName
+                namePrefix = "{}-{}-{}".format(_oxrStatusUpbound.org, envGroupName, oxrMeta.name)
+                region = oxrSpec.parameters.aws.region
+                rootCtp = _oxrStatusUpbound.bootstrapCtp
+                secretsManagerSecretArn: oxrSpec.parameters.aws?.sharedSecret?.secretsManagerSecretArn
+            })
+
 # Return final resource list
-items = _initItems + _mainItems
+items = _initItems + _upboundItems + _awsItems

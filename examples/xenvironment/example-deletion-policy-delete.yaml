@@ -14,6 +14,8 @@ spec:
         name: aws-creds-example
         namespace: default
       region: us-east-1
+      providerRole: {}
+      sharedSecret: {}
     upbound:
       initKubeconfigSecretRef:
         name: init-kubeconfig

@@ -17,10 +17,12 @@ spec:
         namespace: default
       # AWS region for resource provisioning
       region: us-east-1
-      # Optional: ARN of an existing OIDC provider (if you don't want to create a new one)
-      # oidcProviderArn: "arn:aws:iam::12345678912:oidc-provider/proidc.upbound.io"
-      # Optional: ARN of an existing Secrets Manager secret (if you don't want to create a new one)
-      # secretsManagerSecretArn: "arn:aws:secretsmanager:us-east-1:12345678912:secret:example-config-abcde"
+      providerRole: {}
+        # Optional: ARN of an existing OIDC provider (if you don't want to create a new one)
+        # oidcProviderArn: "arn:aws:iam::12345678912:oidc-provider/proidc.upbound.io"
+      sharedSecret: {}
+        # Optional: ARN of an existing Secrets Manager secret (if you don't want to create a new one)
+        # secretsManagerSecretArn: "arn:aws:secretsmanager:us-east-1:12345678912:secret:example-config-abcde"
     upbound:
       initKubeconfigSecretRef:
         name: init-kubeconfig

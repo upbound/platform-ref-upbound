@@ -51,12 +51,20 @@ spec:
                       region:
                         description: The AWS region where resources will be provisioned.
                         type: string
-                      oidcProviderArn:
-                        description: ARN of an existing AWS OIDC provider to use instead of creating a new one.
-                        type: string
-                      secretsManagerSecretArn:
-                        description: ARN of an existing AWS Secrets Manager secret to use instead of creating a new one.
-                        type: string
+                      sharedSecret:
+                        type: object
+                        description: Settings for configuring the shared secret
+                        properties:
+                          secretsManagerSecretArn:
+                            description: ARN of an existing AWS Secrets Manager secret to use instead of creating a new one.
+                            type: string
+                      providerRole:
+                        type: object
+                        description: Settings for the provider-aws role with trust to environment control plane
+                        properties:
+                          oidcProviderArn:
+                            description: ARN of an existing AWS OIDC provider to use instead of creating a new one.
+                            type: string
                     required:
                       - accountId
                       - credsSecretRef
@@ -91,6 +99,8 @@ spec:
                             default: "default"
                         required:
                           - name
+                      teamWithRobot:
+                        type: object
                     required:
                       - initKubeconfigSecretRef
                       - tokenSecretRef

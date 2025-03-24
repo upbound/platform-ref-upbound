@@ -1,6 +1,7 @@
 import models.io.upbound.aws.iam.v1beta1 as iamv1beta1
 import models.io.upbound.aws.secretsmanager.v1beta1 as secretsmanagerv1beta1
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
+import spacesModels.v1alpha1 as spacesv1alpha1
 
 _metadata = lambda name: str -> any {
     { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
@@ -9,9 +10,9 @@ _metadata = lambda name: str -> any {
 schema AWSSecretStoreInput:
     accountId: str
     deletionPolicy: str
+    ctpName: str
     envName: str
     namePrefix: str
-    ocds: any
     region: str
     rootCtp: str
     secretsManagerSecretArn?: str
@@ -147,11 +148,102 @@ getSecretStoreItems = lambda awsParams: AWSSecretStoreInput -> [any] {[
             forProvider = {
                 name = "{}-config".format(awsParams.namePrefix)
                 region = awsParams.region
-                if deletionPolicy == "Delete":
+                if awsParams.deletionPolicy == "Delete":
                     forceOverwriteReplicaSecret = True
             }
             providerConfigRef = {
                 name = awsParams.envName
+            }
+        }
+    }
+    # Shared secret store mapped to secret on cloud-provider
+    kubernetesv1alpha2.Object{
+        metadata = _metadata("sharedSecretsStore") | {
+            name = "{}-sss".format(awsParams.ctpName)
+        }
+        spec = {
+            deletionPolicy = awsParams.deletionPolicy
+            forProvider = {
+                manifest = spacesv1alpha1.SharedSecretStore{
+                    metadata = {
+                        name = awsParams.ctpName
+                        namespace = awsParams.envName
+                    }
+                    spec = {
+                        controlPlaneSelector = {
+                            names = [awsParams.ctpName]
+                        }
+                        namespaceSelector = {
+                            names = ["default"]
+                        }
+                        provider = {
+                            aws = {
+                                service = "SecretsManager"
+                                region = awsParams.region
+                                auth = {
+                                    secretRef = {
+                                        accessKeyIDSecretRef = {
+                                            name = "{}-secrets-read-access-key".format(awsParams.envName)
+                                            key = "username"
+                                        }
+                                        secretAccessKeySecretRef = {
+                                            name = "{}-secrets-read-access-key".format(awsParams.envName)
+                                            key = "password"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            providerConfigRef = {
+                name = "{}-group".format(awsParams.envName)
+            }
+        }
+    }
+
+    # Shared secret which will populate initial secret from cloud into
+    # the main controlplane of the environment
+    kubernetesv1alpha2.Object{
+        metadata = _metadata("sharedExternalSecret") | {
+            name = "{}-ses".format(awsParams.ctpName)
+        }
+        spec = {
+            deletionPolicy = awsParams.deletionPolicy
+            forProvider = {
+                manifest = spacesv1alpha1.SharedExternalSecret{
+                    metadata = {
+                        name = awsParams.ctpName
+                        namespace = awsParams.envName
+                    }
+                    spec = {
+                        controlPlaneSelector = {
+                            names = [awsParams.ctpName]
+                        }
+                        namespaceSelector = {
+                            names = ["default"]
+                        }
+                        externalSecretSpec = {
+                            refreshInterval = "1m"
+                            secretStoreRef = {
+                                name = awsParams.ctpName
+                                kind = "ClusterSecretStore"
+                            }
+                            target = {
+                                name = awsParams.ctpName
+                            }
+                            dataFrom = [{
+                                extract = {
+                                    key = "{}-config".format(awsParams.namePrefix)
+                                }
+                            }]
+                        }
+                    }
+                }
+            }
+            providerConfigRef = {
+                name = "{}-group".format(awsParams.envName)
             }
         }
     }

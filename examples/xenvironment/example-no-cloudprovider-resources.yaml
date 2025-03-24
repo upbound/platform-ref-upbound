@@ -1,0 +1,21 @@
+apiVersion: sa.upbound.io/v1
+kind: XEnvironment
+metadata:
+  name: example
+spec:
+  parameters:
+    # Controls what happens to resources when this XEnvironment is deleted
+    # Options: Orphan (default) or Delete
+    deletionPolicy: Orphan
+    # AWS account configuration
+    upbound:
+      initKubeconfigSecretRef:
+        name: init-kubeconfig
+      tokenSecretRef:
+        name: upbound-token
+status:
+  upbound:
+    bootstrapCtp: bootstrap
+    bootstrapGroup: solutions-non-prod
+    org: upbound
+    spaceHost: upbound-aws-us-east-1.space.mxe.upbound.io

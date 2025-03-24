@@ -1,23 +1,54 @@
+"""
+Team and Robot Configuration Module
+
+This module handles the creation of Upbound team and robot resources for environments. It creates:
+
+1. An Upbound team that can be assigned permissions
+2. A robot account with appropriate API tokens
+3. Team membership for the robot
+4. Role bindings for admin access to the environment group
+5. Secrets containing token credentials for authentication
+"""
+
 import providerUpboundModels.v1alpha1 as pupboundv1alpha1
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
 
 schema TeamRobotTokenSecretRef:
-    name: str
-    namespace: str
-    key: str
+    """
+    Reference to the secret containing an Upbound token
+    """
+    name: str        # Name of the secret
+    namespace: str   # Namespace of the secret
+    key: str         # Key in the secret containing the token
 
 schema TeamWithRobotInput:
-    group: str
-    org: str
-    secretDestProviderConfigName: str
-    spaceProviderConfigName: str
-    tokenSecretRef: TeamRobotTokenSecretRef
+    """
+    Input parameters for creating a team with a robot account
+    """
+    group: str                       # Environment group name
+    org: str                         # Upbound organization name
+    secretDestProviderConfigName: str # Provider config for secret destination
+    spaceProviderConfigName: str     # Provider config for Space operations
+    tokenSecretRef: TeamRobotTokenSecretRef # Reference to existing token secret
+    ocds: any
 
 _metadata = lambda name: str -> any {
     { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
 }
 
 teamWithRobot = lambda input: TeamWithRobotInput -> any {
+    """
+    Creates team and robot resources for Upbound Space environments.
+
+    This function generates:
+    1. An Upbound provider configuration using the supplied token
+    2. A robot account in the organization
+    3. An access token for the robot
+    4. A secret with the robot's token in the environment
+    5. A team within the Upbound organization
+    6. Team membership for the robot
+    7. Admin role binding for the team in the environment group
+    """
     [
         # ProviderConfig provider-upbound
         pupboundv1alpha1.ProviderConfig{
@@ -117,7 +148,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
         }
         # Team
         pupboundv1alpha1.Team {
-            metadata = _metadata("envTeam") | {
+            metadata: _metadata("envTeam") | {
                 name = "{}-team".format(input.group)
             }
             spec = {
@@ -153,7 +184,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
         }
         # Grant admin rights on group to team
         kubernetesv1alpha2.Object{
-            metadata = _metadata("teamAdminBinding") | {
+            metadata: _metadata("teamAdminBinding") | {
                 name = "{}-admin-binding".format(input.group)
             }
             spec = {
@@ -174,9 +205,8 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
                             subjects = [
                                 {
                                     kind = "UpboundTeam"
-                                    # group name and team name are the same
-                                    name = input.group
                                     role = "admin"
+                                    name = input.ocds.envTeam?.Resource?.metadata?.annotations?["crossplane.io/external-name"]
                                 }
                             ]
                         }
