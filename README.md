@@ -199,6 +199,13 @@ The bootstrap configuration automatically creates:
 
 These resources enable automation through GitOps and CI/CD pipelines, allowing programmatic interaction with control planes. The team structure ensures proper access control and permission management for your environment.
 
+## Caveats
+
+### External models
+
+External models (like for provider-upbound and upbound spaces) are imported with `kcl import -m crd crd.yaml` from kubernetes crds
+Imports need to be fixed after crd imoprt to `import ..k8s.apimachinery.pkg.apis.meta.v1`
+
 ## Development
 
 ### Testing

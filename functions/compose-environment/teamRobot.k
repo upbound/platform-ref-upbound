@@ -1,7 +1,4 @@
-# imported with `kcl import -m crd crd.yaml` from kube-crd
-# and fixed k8s import to `import ..k8s.apimachinery.pkg.apis.meta.v1`
 import providerUpboundModels.v1alpha1 as pupboundv1alpha1
-
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
 
 schema TeamRobotTokenSecretRef:

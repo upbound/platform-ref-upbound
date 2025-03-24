@@ -11,9 +11,6 @@ integrated AWS cloud resources. The function handles:
 
 import models.io.upbound.sa.v1 as sav1
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
-
-# imported with `kcl import -m crd crd.yaml` from kube-crd
-# and fixed k8s imoprt to `import ..k8s.apimachinery.pkg.apis.meta.v1`
 import spacesModels.v1alpha1 as spacesv1alpha1
 
 # sytem modules
