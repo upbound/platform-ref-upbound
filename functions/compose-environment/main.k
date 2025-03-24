@@ -144,6 +144,9 @@ if _initReady:
                         metadata = {
                             name = oxrMeta.name
                             namespace = envGroupName
+                            annotations = {
+                                foo = str(oxrSpec)
+                            }
                         }
                         spec = {
                             class = "default"
