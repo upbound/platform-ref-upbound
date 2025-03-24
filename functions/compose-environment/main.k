@@ -11,9 +11,6 @@ integrated AWS cloud resources. The function handles:
 
 import models.io.upbound.sa.v1 as sav1
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
-
-# imported with `kcl import -m crd crd.yaml` from kube-crd
-# and fixed k8s imoprt to `import ..k8s.apimachinery.pkg.apis.meta.v1`
 import spacesModels.v1alpha1 as spacesv1alpha1
 
 # sytem modules
@@ -34,10 +31,8 @@ dxr = option("params").dxr # desired composite resource
 dcds = option("params").dcds # desired composed resources
 
 # workaround for https://cloud-native.slack.com/archives/C05TC96NWN8/p1736885830442079
-oxrMeta =  oxr.metadata
-oxrSpec =  oxr.spec
-#oxrMeta =  xenvironment.XEnvironment.metadata{**oxr.metadata}
-#oxrSpec =  xenvironment.XEnvironment.spec{**oxr.spec}
+oxrMeta =  sav1.XEnvironment.metadata{**oxr.metadata}
+oxrSpec =  sav1.XEnvironment.spec{**oxr.spec}
 
 _metadata = lambda name: str -> any {
     { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
