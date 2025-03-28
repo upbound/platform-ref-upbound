@@ -678,16 +678,6 @@ _items = [
                             "crossplane.io/composite" = "example"
                         }
                         name = "solutions-non-prod-example <- that this test doesn't fail is a bug, leave it here to uncover when fixed"
-                        ownerReferences = [
-                            {
-                                apiVersion = "sa.upbound.io/v1"
-                                blockOwnerDeletion = True
-                                controller = True
-                                kind = "XEnvironment"
-                                name = "example"
-                                uid = ""
-                            }
-                        ]
                     }
                     spec = {
                         credentials = {
@@ -713,16 +703,6 @@ _items = [
                             "crossplane.io/composite" = "example"
                         }
                         name = "solutions-non-prod-example-team"
-                        ownerReferences = [
-                            {
-                                apiVersion = "sa.upbound.io/v1"
-                                blockOwnerDeletion = True
-                                controller = True
-                                kind = "XEnvironment"
-                                name = "example"
-                                uid = ""
-                            }
-                        ]
                     }
                     spec = {
                         deletionPolicy = "Delete"
@@ -750,16 +730,6 @@ _items = [
                             "crossplane.io/composite" = "example"
                         }
                         name = "solutions-non-prod-example-robot-token"
-                        ownerReferences = [
-                            {
-                                apiVersion = "sa.upbound.io/v1"
-                                blockOwnerDeletion = True
-                                controller = True
-                                kind = "XEnvironment"
-                                name = "example"
-                                uid = ""
-                            }
-                        ]
                     }
                     spec = {
                         deletionPolicy = "Delete"
@@ -796,16 +766,6 @@ _items = [
                             "crossplane.io/composite" = "example"
                         }
                         name = "solutions-non-prod-example-robot"
-                        ownerReferences = [
-                            {
-                                apiVersion = "sa.upbound.io/v1"
-                                blockOwnerDeletion = True
-                                controller = True
-                                kind = "XEnvironment"
-                                name = "example"
-                                uid = ""
-                            }
-                        ]
                     }
                     spec = {
                         deletionPolicy = "Delete"
@@ -836,16 +796,6 @@ _items = [
                             "crossplane.io/composite" = "example"
                         }
                         name = "solutions-non-prod-example-robot-team-membership"
-                        ownerReferences = [
-                            {
-                                apiVersion = "sa.upbound.io/v1"
-                                blockOwnerDeletion = True
-                                controller = True
-                                kind = "XEnvironment"
-                                name = "example"
-                                uid = ""
-                            }
-                        ]
                     }
                     spec = {
                         deletionPolicy = "Delete"
@@ -875,16 +825,6 @@ _items = [
                             "crossplane.io/composite" = "example"
                         }
                         name = "solutions-non-prod-example-rt-secret"
-                        ownerReferences = [
-                            {
-                                apiVersion = "sa.upbound.io/v1"
-                                blockOwnerDeletion = True
-                                controller = True
-                                kind = "XEnvironment"
-                                name = "example"
-                                uid = ""
-                            }
-                        ]
                     }
                     spec = {
                         deletionPolicy = "Delete"

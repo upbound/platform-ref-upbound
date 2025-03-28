@@ -4,8 +4,9 @@ This Crossplane configuration package enables bootstrapping of Upbound Spaces en
 
 ## Overview
 
-The Bootstrap Configuration Package provides an `XEnvironment` custom resource that automates the creation and management of:
+The Bootstrap Configuration Package provides custom resources that automate the creation and management of:
 
+### XEnvironment Resource
 - Upbound Control Planes in Spaces
 - AWS IAM roles and permissions
 - Cross-service authentication with OIDC
@@ -13,12 +14,17 @@ The Bootstrap Configuration Package provides an `XEnvironment` custom resource t
 - Provider configurations for Kubernetes resources
 - Teams, robots, and robot tokens for automation
 
+### XUpboundRepoSet Resource
+- Upbound repositories creation and configuration
+- Team-based permission management for repositories
+
 ## Features
 
 - **Declarative Environment Management**: Define your entire environment as code
 - **AWS Integration**: Automated setup of IAM roles, policies, and OIDC authentication
 - **Secret Management**: Secure transfer of credentials between AWS and Upbound
 - **Team & Robot Automation**: Create teams, robots, and tokens for automated workflows
+- **Repository Management**: Create and configure Upbound repositories with team permissions
 - **GitOps Ready**: Designed for continuous delivery workflows
 - **Optional Components**: Flexibility to enable/disable specific features as needed:
   - AWS Provider Role with OIDC
@@ -232,6 +238,38 @@ When the `teamWithRobot` parameter is specified (even as an empty object), the b
 These resources enable automation through GitOps and CI/CD pipelines, allowing programmatic interaction with control planes. The team structure ensures proper access control and permission management for your environment.
 
 If you don't need team and robot resources, simply omit the `teamWithRobot` parameter from your XEnvironment specification.
+
+## XUpboundRepoSet
+
+The `XUpboundRepoSet` custom resource allows you to manage Upbound repositories and their permissions declaratively.
+
+### Usage Example
+
+```yaml
+apiVersion: sa.upbound.io/v1
+kind: XUpboundRepoSet
+metadata:
+  name: example
+spec:
+  parameters:
+    organization: your-organization
+    permissions:
+      teams:
+        your-team-name:
+          permission: write
+    repositories:
+      repo-name-1: {}
+      repo-name-2: {}
+    tokenSecretRef:
+      name: your-token-secret
+```
+
+### Parameters
+
+- **organization**: The Upbound organization name
+- **permissions.teams**: Map of team names to permission objects (with permission type)
+- **repositories**: Map of repository names to empty objects
+- **tokenSecretRef**: Reference to a Kubernetes secret containing the Upbound token
 
 ## Caveats
 
