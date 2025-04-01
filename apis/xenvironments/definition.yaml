@@ -72,6 +72,25 @@ spec:
                   upbound:
                     type: object
                     properties:
+                      secretSync:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            sourceRef:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                namespace:
+                                  type: string
+                            destRef:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                namespace:
+                                  type: string
                       tokenSecretRef:
                         type: object
                         properties:

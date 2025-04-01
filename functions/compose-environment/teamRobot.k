@@ -114,38 +114,6 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
                 }
             }
         }
-        # Copy robot token to env ctp
-        kubernetesv1alpha2.Object {
-            metadata = _metadata("robotTokenEnvCtpSecret") | {
-                name = "{}-rt-secret".format(input.group)
-            }
-            spec = {
-                forProvider = {
-                    manifest = {
-                        apiVersion = "v1"
-                        kind = "Secret"
-                        metadata = {
-                            namespace = "default"
-                        }
-                    }
-                }
-                providerConfigRef = {
-                    name = input.secretDestProviderConfigName
-                }
-                references = [
-                    {
-                        patchesFrom = {
-                            apiVersion = "v1"
-                            kind = "Secret"
-                            name = "{}-robot-token".format(input.group)
-                            namespace = "default"
-                            fieldPath = "data.token"
-                        }
-                        toFieldPath = "data.token"
-                    }
-                ]
-            }
-        }
         # Team
         pupboundv1alpha1.Team {
             metadata: _metadata("envTeam") | {
