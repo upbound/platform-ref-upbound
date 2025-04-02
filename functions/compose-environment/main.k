@@ -105,7 +105,7 @@ _initItems = [
                 }
             }
             providerConfigRef = {
-                name = "bootstrap-ctp"
+                name = oxrSpec.parameters.upbound.initProviderConfigName
             }
             managementPolicies = ["Observe"]
         }
@@ -132,98 +132,104 @@ if _initReady:
 
     _upboundItems = [
         # Main controlplane for the environment
-        kubernetesv1alpha2.Object{
-            metadata = _metadata("ctp") | {
-                name = "{}-ctp".format(oxrMeta.name)
-            }
-            spec = {
-                deletionPolicy = oxrSpec.parameters.deletionPolicy
-                forProvider = {
-                    manifest = {
-                        apiVersion = "spaces.upbound.io/v1beta1"
-                        kind = "ControlPlane"
-                        metadata = {
-                            name = oxrMeta.name
-                            namespace = envGroupName
-                            annotations = {
-                                foo = str(oxrSpec)
+        if oxrSpec.parameters.upbound.createCtp:
+            kubernetesv1alpha2.Object{
+                metadata = _metadata("ctp") | {
+                    name = "{}-ctp".format(oxrMeta.name)
+                }
+                spec = {
+                    deletionPolicy = oxrSpec.parameters.deletionPolicy
+                    forProvider = {
+                        manifest = {
+                            apiVersion = "spaces.upbound.io/v1beta1"
+                            kind = "ControlPlane"
+                            metadata = {
+                                name = oxrMeta.name
+                                namespace = envGroupName
+                                annotations = {
+                                    foo = str(oxrSpec)
+                                }
                             }
-                        }
-                        spec = {
-                            class = "default"
-                            crossplane = {
-                                autoUpgrade = {
-                                    channel = "Rapid"
+                            spec = {
+                                class = "default"
+                                crossplane = {
+                                    autoUpgrade = {
+                                        channel = "Rapid"
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                providerConfigRef = {
-                    name = "{}-group".format(envGroupName)
-                }
-            }
-        }
-
-        kubernetesv1alpha2.Object{
-            metadata = _metadata("envGroup") | {
-                name = envGroupName
-            }
-            spec = {
-                deletionPolicy = oxrSpec.parameters.deletionPolicy
-                forProvider = {
-                    manifest = {
-                        apiVersion = "v1"
-                        kind = "Namespace"
-                        metadata = {
-                            name = envGroupName
-                        }
+                    providerConfigRef = {
+                        name = "{}-group".format(envGroupName)
                     }
                 }
-                providerConfigRef = {
-                    name = "{}-space".format(oxrMeta.name)
+            }
+
+        if oxrSpec.parameters.upbound.createGroup:
+            kubernetesv1alpha2.Object{
+                metadata = _metadata("envGroup") | {
+                    name = envGroupName
+                }
+                spec = {
+                    deletionPolicy = oxrSpec.parameters.deletionPolicy
+                    forProvider = {
+                        manifest = {
+                            apiVersion = "v1"
+                            kind = "Namespace"
+                            metadata = {
+                                name = envGroupName
+                            }
+                        }
+                    }
+                    providerConfigRef = {
+                        name = "{}-space".format(oxrMeta.name)
+                    }
                 }
             }
-        }
+    ]
+    if oxrSpec.parameters.upbound.createCtp:
+        _upboundItems += pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
+            # controlplane level providerconfig for provider-kubernetes
+            spaceHost = _oxrStatusUpbound.spaceHost
+            org = _oxrStatusUpbound.org
+            group = envGroupName
+            ctp = oxrMeta.name
+            providerConfigName = "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
+            upboundTokenSecretRef = pKubernetesHelper.UpboundTokenSecretRef{
+                name = oxrSpec.parameters.upbound.tokenSecretRef.name
+                namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
+                key = oxrSpec.parameters.upbound.tokenSecretRef.key
+            }
+        })
 
-    ] + \
-    pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
-        # controlplane level providerconfig for provider-kubernetes
-        spaceHost = _oxrStatusUpbound.spaceHost
-        org = _oxrStatusUpbound.org
-        group = envGroupName
-        ctp = oxrMeta.name
-        providerConfigName = "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
-        upboundTokenSecretRef = pKubernetesHelper.UpboundTokenSecretRef{
-            name = oxrSpec.parameters.upbound.tokenSecretRef.name
-            namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
-            key = oxrSpec.parameters.upbound.tokenSecretRef.key
-        }
-    }) + \
-    pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
-        # environment group level providerconfig for provider-kubernetes
-        spaceHost = _oxrStatusUpbound.spaceHost
-        org = _oxrStatusUpbound.org
-        group = envGroupName
-        providerConfigName = "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
-        upboundTokenSecretRef = pKubernetesHelper.UpboundTokenSecretRef{
-            name = oxrSpec.parameters.upbound.tokenSecretRef.name
-            namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
-            key = oxrSpec.parameters.upbound.tokenSecretRef.key
-        }
-    }) + \
-    pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
-        # space level providerconfig for provider-kubernetes
-        spaceHost = _oxrStatusUpbound.spaceHost
-        org = _oxrStatusUpbound.org
-        prefix = oxrMeta.name
-        providerConfigName = "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
-        upboundTokenSecretRef = pKubernetesHelper.UpboundTokenSecretRef{
-            name = oxrSpec.parameters.upbound.tokenSecretRef.name
-            namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
-            key = oxrSpec.parameters.upbound.tokenSecretRef.key
-        }
-    })
+    if oxrSpec.parameters.upbound.createGroup:
+        _upboundItems += pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
+            # environment group level providerconfig for provider-kubernetes
+            spaceHost = _oxrStatusUpbound.spaceHost
+            org = _oxrStatusUpbound.org
+            group = envGroupName
+            providerConfigName = "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
+            upboundTokenSecretRef = pKubernetesHelper.UpboundTokenSecretRef{
+                name = oxrSpec.parameters.upbound.tokenSecretRef.name
+                namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
+                key = oxrSpec.parameters.upbound.tokenSecretRef.key
+            }
+        })
+
+    if oxrSpec.parameters.upbound.createGroup:
+        _upboundItems += pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
+            # space level providerconfig for provider-kubernetes
+            spaceHost = _oxrStatusUpbound.spaceHost
+            org = _oxrStatusUpbound.org
+            prefix = oxrMeta.name
+            providerConfigName = "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
+            upboundTokenSecretRef = pKubernetesHelper.UpboundTokenSecretRef{
+                name = oxrSpec.parameters.upbound.tokenSecretRef.name
+                namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
+                key = oxrSpec.parameters.upbound.tokenSecretRef.key
+            }
+        })
 
     # If creation of team with robot is enabled
     if oxrSpec.parameters.upbound.teamWithRobot != Undefined:
@@ -233,11 +239,14 @@ if _initReady:
             secretDestProviderConfigName = "{}-ctp".format(oxrMeta.name)
             spaceProviderConfigName = "{}-space".format(oxrMeta.name)
             ocds = ocds
+            teamNameOverride = oxrSpec.parameters.upbound.teamWithRobot.teamNameOverride
+            teamExternalName = oxrSpec.parameters.upbound.teamWithRobot.teamExternalName
             tokenSecretRef = teamRobot.TeamRobotTokenSecretRef{
                 name = oxrSpec.parameters.upbound.tokenSecretRef.name
                 namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
                 key = oxrSpec.parameters.upbound.tokenSecretRef.key
             }
+            createGroupAdminBinding = oxrSpec.parameters.upbound.createGroup
         })
 
     if oxrSpec.parameters.upbound.secretSync:

@@ -35,7 +35,6 @@ spec:
           sourceRef:
             name: some-secret-on-bootstrap-ctp
             namespace: default
-          providerConfigName: some-ctp
 
 status:
   upbound:

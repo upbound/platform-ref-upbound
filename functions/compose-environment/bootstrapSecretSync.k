@@ -14,7 +14,7 @@ import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
 schema SecretRef:
     """
     Reference to a Kubernetes secret.
-    
+
     Attributes:
         name: The name of the secret
         namespace: The namespace where the secret is located
@@ -25,21 +25,22 @@ schema SecretRef:
 schema SecretSyncInput:
     """
     Configuration for secret synchronization.
-    
+
     Attributes:
         sourceRef: Reference to the source secret in bootstrap control plane
         destRef: Reference to the destination secret in the environment
     """
     sourceRef: SecretRef
     destRef: SecretRef
+    providerConfigName: str
 
 _metadata = lambda name: str -> any {
     """
     Creates metadata with a standardized composition resource name.
-    
+
     Args:
         name: The name to include in the annotations
-        
+
     Returns:
         A metadata object with annotations for composition resource naming
     """
@@ -49,14 +50,14 @@ _metadata = lambda name: str -> any {
 syncedSecrets = lambda input: [SecretSyncInput] -> any {
     """
     Creates Crossplane Kubernetes provider objects to sync secrets from bootstrap to environments.
-    
+
     Uses the Kubernetes provider to copy secret data from bootstrap control plane to environment,
     replicating the data field while creating a new secret with the specified name
     and namespace in the destination environment.
-    
+
     Args:
         input: List of SecretSyncInput configurations defining the secrets to sync
-        
+
     Returns:
         List of Crossplane Kubernetes provider Object resources
     """
@@ -78,7 +79,7 @@ syncedSecrets = lambda input: [SecretSyncInput] -> any {
                     }
                 }
                 providerConfigRef = {
-                    name = "kubernetes"
+                    name = secret.providerConfigName
                 }
                 references = [
                     {

@@ -4,7 +4,7 @@ This Crossplane configuration package enables declarative bootstrapping of Upbou
 
 ## Overview
 
-The Bootstrap Configuration Package provides custom resources that automate the creation and management of:
+The Bootstrap Configuration Package provides custom resources that automate the creation and management of Upbound environments and repositories in a fully declarative manner.
 
 ### XEnvironment Resource
 - Upbound Control Planes in Spaces
@@ -18,6 +18,7 @@ The Bootstrap Configuration Package provides custom resources that automate the 
 ### XUpboundRepoSet Resource
 - Upbound repositories creation and configuration
 - Team-based permission management for repositories
+- Consistent repository configuration across your organization
 
 ## Features
 
@@ -26,7 +27,7 @@ The Bootstrap Configuration Package provides custom resources that automate the 
 - **Secret Management**: Secure transfer of credentials between AWS and Upbound
 - **Bootstrap Secret Synchronization**: Copy secrets from bootstrap control plane to target environments
 - **Team & Robot Automation**: Create teams, robots, and tokens for automated workflows
-- **Repository Management**: Create and configure Upbound repositories with team permissions
+- **Repository Management**: Create and configure Upbound repositories with team permissions and robot access
 - **GitOps Ready**: Designed for continuous delivery workflows
 - **Optional Components**: Flexibility to enable/disable specific features as needed:
   - AWS Provider Role with OIDC
@@ -289,14 +290,19 @@ spec:
       repo-name-2: {}
     tokenSecretRef:
       name: your-token-secret
+      namespace: default
+      key: token
 ```
 
 ### Parameters
 
 - **organization**: The Upbound organization name
-- **permissions.teams**: Map of team names to permission objects (with permission type)
+- **permissions.teams**: Map of team names to permission objects (with permission type: "read", "write", "admin")
 - **repositories**: Map of repository names to empty objects
 - **tokenSecretRef**: Reference to a Kubernetes secret containing the Upbound token
+  - **name**: Name of the secret
+  - **namespace**: Namespace for the secret (defaults to "default")
+  - **key**: Key in the secret (defaults to "token")
 
 ## Caveats
 

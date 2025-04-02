@@ -31,6 +31,9 @@ schema TeamWithRobotInput:
     spaceProviderConfigName: str     # Provider config for Space operations
     tokenSecretRef: TeamRobotTokenSecretRef # Reference to existing token secret
     ocds: any
+    teamNameOverride?: str
+    teamExternalName?: str
+    createGroupAdminBinding?: bool
 
 _metadata = lambda name: str -> any {
     { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
@@ -118,10 +121,15 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
         pupboundv1alpha1.Team {
             metadata: _metadata("envTeam") | {
                 name = "{}-team".format(input.group)
+                if input.teamExternalName:
+                    annotations: {
+                        "crossplane.io/external-name" = input.teamExternalName
+                    }
             }
             spec = {
+                deletionPolicy = "Orphan"
                 forProvider = {
-                    name = input.group
+                    name = input.teamNameOverride or "{}-team".format(input.group)
                     organizationName = input.org
                 }
                 providerConfigRef = {
@@ -151,39 +159,40 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
 
         }
         # Grant admin rights on group to team
-        kubernetesv1alpha2.Object{
-            metadata: _metadata("teamAdminBinding") | {
-                name = "{}-admin-binding".format(input.group)
-            }
-            spec = {
-                forProvider = {
-                    manifest = {
-                        apiVersion = "authorization.spaces.upbound.io/v1alpha1"
-                        kind = "ObjectRoleBinding"
-                        metadata = {
-                            name = "{}-admin-binding".format(input.group)
-                            namespace = input.group
-                        }
-                        spec = {
-                            object = {
-                                apiGroup = "core"
-                                resource = "namespaces"
-                                name = input.group
+        if input.createGroupAdminBinding:
+            kubernetesv1alpha2.Object{
+                metadata: _metadata("teamAdminBinding") | {
+                    name = "{}-admin-binding".format(input.group)
+                }
+                spec = {
+                    forProvider = {
+                        manifest = {
+                            apiVersion = "authorization.spaces.upbound.io/v1alpha1"
+                            kind = "ObjectRoleBinding"
+                            metadata = {
+                                name = "{}-admin-binding".format(input.group)
+                                namespace = input.group
                             }
-                            subjects = [
-                                {
-                                    kind = "UpboundTeam"
-                                    role = "admin"
-                                    name = input.ocds.envTeam?.Resource?.metadata?.annotations?["crossplane.io/external-name"]
+                            spec = {
+                                object = {
+                                    apiGroup = "core"
+                                    resource = "namespaces"
+                                    name = input.group
                                 }
-                            ]
+                                subjects = [
+                                    {
+                                        kind = "UpboundTeam"
+                                        role = "admin"
+                                        name = input.ocds.envTeam?.Resource?.metadata?.annotations?["crossplane.io/external-name"]
+                                    }
+                                ]
+                            }
                         }
                     }
-                }
-                providerConfigRef = {
-                    name = input.spaceProviderConfigName
+                    providerConfigRef = {
+                        name = input.spaceProviderConfigName
+                    }
                 }
             }
-        }
     ]
 }

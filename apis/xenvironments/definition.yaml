@@ -72,6 +72,12 @@ spec:
                   upbound:
                     type: object
                     properties:
+                      createGroup:
+                        type: boolean
+                        default: true
+                      createCtp:
+                        type: boolean
+                        default: true
                       secretSync:
                         type: array
                         items:
@@ -118,8 +124,16 @@ spec:
                             default: "default"
                         required:
                           - name
+                      initProviderConfigName:
+                        type: string
+                        default: "bootstrap-ctp"
                       teamWithRobot:
                         type: object
+                        properties:
+                          teamNameOverride:
+                            type: string
+                          teamExternalName:
+                            type: string
                     required:
                       - initKubeconfigSecretRef
                       - tokenSecretRef
