@@ -38,6 +38,9 @@ spec:
                       accountId:
                         description: The AWS account ID where resources will be provisioned.
                         type: string
+                      roleArn:
+                        description: Role ARN of the aws role used to create root-level objects like provider role and shared secret.
+                        type: string
                       credsSecretRef:
                         description: Reference to the secret containing AWS credentials.
                         type: object
@@ -67,7 +70,6 @@ spec:
                             type: string
                     required:
                       - accountId
-                      - credsSecretRef
                       - region
                   upbound:
                     type: object

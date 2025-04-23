@@ -5,7 +5,8 @@ _metadata = lambda name: str -> any {
 }
 
 schema AWSProviderConfigInput:
-    awsCredsSecretRef: awsv1beta1.AwsUpboundIoV1beta1ProviderConfigSpecCredentialsSecretRef
+    awsCredsSecretRef?: awsv1beta1.AwsUpboundIoV1beta1ProviderConfigSpecCredentialsSecretRef
+    awsRoleArn?: str
     envName: str
 
 getProviderConfig = lambda awsParams: AWSProviderConfigInput -> [any] {[
@@ -17,9 +18,19 @@ getProviderConfig = lambda awsParams: AWSProviderConfigInput -> [any] {[
             }
         }
         spec = {
-            credentials = {
-                source = "Secret"
-                secretRef = awsParams.awsCredsSecretRef
-            }
+            if awsParams.awsRoleArn:
+                credentials = {
+                    source = "Upbound"
+                    upbound = {
+                        webIdentity = {
+                            roleARN = awsParams.awsRoleArn
+                        }
+                    }
+                }
+            else:
+                credentials = {
+                    source = "Secret"
+                    secretRef = awsParams.awsCredsSecretRef
+                }
         }
 }]}

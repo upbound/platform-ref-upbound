@@ -266,11 +266,14 @@ if _initReady:
     if oxrSpec.parameters.aws != Undefined:
         # create providerconfig for aws
         _awsItems += awsProviderConfig.getProviderConfig(awsProviderConfig.AWSProviderConfigInput{
-            awsCredsSecretRef = {
-                namespace = oxrSpec.parameters.aws.credsSecretRef.namespace
-                name = oxrSpec.parameters.aws.credsSecretRef.name
-                key = "credentials"
-            }
+            if oxrSpec.parameters.aws.roleArn:
+                awsRoleArn = oxrSpec.parameters.aws.roleArn
+            if oxrSpec.parameters.aws.credsSecretRef:
+                awsCredsSecretRef = {
+                    namespace = oxrSpec.parameters.aws.credsSecretRef.namespace
+                    name = oxrSpec.parameters.aws.credsSecretRef.name
+                    key = "credentials"
+                }
             envName = envGroupName
         })
 
