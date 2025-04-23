@@ -28,6 +28,15 @@ spec:
         name: init-kubeconfig
       tokenSecretRef:
         name: upbound-token
+      secretSync:
+        - destRef:
+            name: dest-name
+            namespace: default
+          sourceRef:
+            name: some-secret-on-bootstrap-ctp
+            namespace: default
+          providerConfigName: some-ctp
+
 status:
   upbound:
     bootstrapCtp: bootstrap

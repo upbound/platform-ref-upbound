@@ -23,6 +23,7 @@ import aws.secretStore as awsSS
 import aws.crossplaneRole as awsXPRole
 import pKubernetesHelper
 import teamRobot
+import bootstrapSecretSync
 
 oxr = option("params").oxr # observed composite resource
 ocds = option("params").ocds # observed composed resources
@@ -164,7 +165,6 @@ if _initReady:
             }
         }
 
-
         kubernetesv1alpha2.Object{
             metadata = _metadata("envGroup") | {
                 name = envGroupName
@@ -239,6 +239,19 @@ if _initReady:
                 key = oxrSpec.parameters.upbound.tokenSecretRef.key
             }
         })
+
+    if oxrSpec.parameters.upbound.secretSync:
+        _upboundItems += bootstrapSecretSync.syncedSecrets([bootstrapSecretSync.SecretSyncInput{
+            sourceRef = {
+                name = secret.sourceRef.name
+                namespace = secret.sourceRef.namespace
+            }
+            destRef = {
+                name = secret.destRef.name
+                namespace = secret.destRef.namespace
+            }
+            providerConfigName = "{}-ctp".format(oxrMeta.name)
+        } for secret in oxrSpec.parameters.upbound.secretSync])
 
     # If aws features are enabled
     if oxrSpec.parameters.aws != Undefined:

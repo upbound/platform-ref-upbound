@@ -1,6 +1,6 @@
 # Bootstrap Configuration Package
 
-This Crossplane configuration package enables bootstrapping of Upbound Spaces environments with AWS integration through a declarative GitOps approach.
+This Crossplane configuration package enables declarative bootstrapping of Upbound Spaces environments with AWS integration through a GitOps approach.
 
 ## Overview
 
@@ -11,6 +11,7 @@ The Bootstrap Configuration Package provides custom resources that automate the 
 - AWS IAM roles and permissions
 - Cross-service authentication with OIDC
 - Secret management between AWS and Upbound
+- Secret synchronization from bootstrap control plane to environment
 - Provider configurations for Kubernetes resources
 - Teams, robots, and robot tokens for automation
 
@@ -23,6 +24,7 @@ The Bootstrap Configuration Package provides custom resources that automate the 
 - **Declarative Environment Management**: Define your entire environment as code
 - **AWS Integration**: Automated setup of IAM roles, policies, and OIDC authentication
 - **Secret Management**: Secure transfer of credentials between AWS and Upbound
+- **Bootstrap Secret Synchronization**: Copy secrets from bootstrap control plane to target environments
 - **Team & Robot Automation**: Create teams, robots, and tokens for automated workflows
 - **Repository Management**: Create and configure Upbound repositories with team permissions
 - **GitOps Ready**: Designed for continuous delivery workflows
@@ -30,18 +32,20 @@ The Bootstrap Configuration Package provides custom resources that automate the 
   - AWS Provider Role with OIDC
   - AWS Secrets Manager integration
   - Upbound Team with Robot setup
+  - Bootstrap secret synchronization
 
 ## Usage
 
 ### Prerequisites
 
 - Upbound account with appropriate permissions
-- Access to an AWS account
+- Access to AWS account
 - kubectl CLI installed and configured
+- Upbound CLI (`up`) installed
 
 ### Installation
 
-1. Create a group and a controlplane on upbound
+1. Create a group and control plane on Upbound
 
    *This step establishes your Upbound organizational structure. The group organizes your control planes, and the control plane is where Crossplane will run to manage your infrastructure.*
 
@@ -62,28 +66,28 @@ up group create "${UPBOUND_GROUP}"
 # Switch context to group
 up ctx "${UPBOUND_ORG}/${UPBOUND_SPACE}/${UPBOUND_GROUP}"
 
-# Create controlplane
+# Create control plane
 up ctp create "${UPBOUND_CTP}" --crossplane-channel="Rapid"
 
-# Check status of controlplane (should show Healthy: True)
+# Check status of control plane (should show Healthy: True)
 up ctp list
 
-# Switch context to control-plane (might take a minute to become ready)
+# Switch context to control plane (might take a minute to become ready)
 up ctx "${UPBOUND_ORG}/${UPBOUND_SPACE}/${UPBOUND_GROUP}/${UPBOUND_CTP}"
 ```
 
-2. Create personal access token for upbound
+2. Create personal access token for Upbound
 
    *The token enables API authentication with Upbound services. This will be used by Crossplane providers to interact with your control planes.*
 
 - Navigate to `https://console.upbound.io/`
 - Choose your organization and click on "Console"
-- Click on your user in the upper right corner
+- Click on your user profile in the upper right corner
 - Click on "My Account"
-- Click on "API Tokens" on the left navigation
+- Select "API Tokens" from the left navigation
 - Click "Create New Token"
-- Enter a name for your token and click on "Create Token"
-- Copy the Token (Access ID is not needed for our case)
+- Enter a name for your token and click "Create Token"
+- Copy the Token value (Access ID is not needed for this use case)
 
 3. Create kubernetes secrets for the token
 
@@ -198,6 +202,14 @@ cat <<EOF | kubectl apply -f -
           name: bootstrap-token
         # Optional: Creates a team with associated robot and token when specified
         teamWithRobot: {}
+        # Optional: Synchronize secrets from bootstrap control plane to this environment
+        secretSync:
+          - sourceRef:
+              name: source-secret-name
+              namespace: default
+            destRef:
+              name: destination-secret-name
+              namespace: default
 EOF
 ```
 
@@ -224,6 +236,21 @@ When the `sharedSecret` parameter is specified:
 - To use an existing secret, specify its ARN: `sharedSecret: { secretsManagerSecretArn: "arn:aws:..." }`
 
 ### Upbound Components
+
+#### Secret Synchronization
+
+When the `secretSync` parameter is specified, the bootstrap configuration copies secrets from the bootstrap control plane to the target environment control plane. This feature is useful for sharing robot tokens with CI environments and making secrets created in the bootstrap context available in the new environment.
+
+Example configuration:
+```yaml
+secretSync:
+  - sourceRef:
+      name: source-secret-name
+      namespace: default
+    destRef:
+      name: destination-secret-name
+      namespace: default
+```
 
 #### Teams, Robots, and Tokens
 
