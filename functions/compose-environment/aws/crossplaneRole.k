@@ -22,6 +22,7 @@ schema AWSXPRoleInput:
     accountId: str         # AWS account ID
     deletionPolicy: str    # Deletion policy for resources (Delete or Orphan)
     envName: str           # Environment name
+    ctpName: str           # Control plane name
     namePrefix: str        # Prefix for AWS resource names
     oidcProviderArn?: str  # Optional: Existing OIDC provider ARN (if any)
     region: str            # AWS region
@@ -54,7 +55,7 @@ getXPRoleItems = lambda awsParams: AWSXPRoleInput -> [any] {
         {{
             "Effect": "Allow",
             "Principal": {{
-                "Federated": "arn:aws:iam:::oidc-provider/proidc.upbound.io"
+                "Federated": "arn:aws:iam::{}:oidc-provider/proidc.upbound.io"
             }},
             "Action": "sts:AssumeRoleWithWebIdentity",
             "Condition": {{
@@ -65,7 +66,7 @@ getXPRoleItems = lambda awsParams: AWSXPRoleInput -> [any] {
             }}
         }}
     ]
-}}""".format(awsParams.upboundOrg, awsParams.envName)
+}}""".format(awsParams.accountId, awsParams.upboundOrg, awsParams.ctpName)
             }
             providerConfigRef = {
                 name = awsParams.envName

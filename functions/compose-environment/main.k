@@ -283,6 +283,7 @@ if _initReady:
                 accountId = oxrSpec.parameters.aws.accountId
                 deletionPolicy = oxrSpec.parameters.deletionPolicy
                 envName = envGroupName
+                ctpName = oxrMeta.name
                 namePrefix = "{}-{}-{}".format(_oxrStatusUpbound.org, envGroupName, oxrMeta.name)
                 oidcProviderArn: oxrSpec.parameters.aws?.providerRole?.oidcProviderArn
                 region = oxrSpec.parameters.aws.region
