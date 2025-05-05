@@ -1,10 +1,9 @@
 import models.io.upbound.dev.meta.v1alpha1 as metav1alpha1
 import models.io.upbound.sa.v1 as sav1
 
-
 _items = [
     metav1alpha1.CompositionTest{
-        metadata.name: ""
+        metadata.name: "test-xupboundreposet"
         spec= {
             assertResources: [
                 sav1.XUpboundRepoSet{
@@ -58,6 +57,8 @@ _items = [
                         forProvider = {
                             name = "configuration-aws-network"
                             organizationName = "upboundcare"
+                            public = True
+                            publish = True
                         }
                         managementPolicies = [
                             "*"
@@ -115,6 +116,8 @@ _items = [
                         forProvider = {
                             name = "configuration-aws-network_xnetwork"
                             organizationName = "upboundcare"
+                            public = True
+                            publish = True
                         }
                         managementPolicies = [
                             "*"

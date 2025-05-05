@@ -80,7 +80,7 @@ schema ObjectMeta:
 
     labels?: {str:str}
 
-    managedFields?: [ManagedFieldsEntry]
+    managedFields?: any
 
     name?: str
 

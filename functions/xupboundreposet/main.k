@@ -15,7 +15,8 @@ Parameters:
 """
 
 import models.io.upbound.sa.v1 as sav1
-import providerUpboundModels.v1alpha1 as pupboundv1alpha1
+import models.io.upbound.repository.v1alpha1 as repositoryv1alpha1
+import models.io.upbound.v1alpha1 as v1alpha1
 
 # Extract the XUpboundRepoSet object from the parameters
 oxr = sav1.XUpboundRepoSet{**option("params").oxr}
@@ -28,7 +29,7 @@ _metadata = lambda name: str -> any {
 # Generate list of resources to create
 _items = [
     # Create Repository resources for each repository specified in the parameters
-    pupboundv1alpha1.Repository{
+    repositoryv1alpha1.Repository{
         metadata: _metadata("{}-{}".format(oxr.spec.parameters.organization, repo)) | {
             annotations: {
                 "crosslane.io/external-name": repo
@@ -38,18 +39,20 @@ _items = [
             # Use Orphan deletion policy to avoid repository deletion when XUpboundRepoSet is deleted
             deletionPolicy = "Orphan"
             forProvider = {
-                name = repo
+                name =repo
                 organizationName = oxr.spec.parameters.organization
+                public = opts.public
+                publish = opts.publish
             }
             providerConfigRef = {
                 name = "{}-{}-reposet".format(oxr.metadata.name, oxr.spec.parameters.organization)
             }
         }
-    } for repo in oxr.spec.parameters.repositories
+    } for repo, opts in oxr.spec.parameters.repositories
 ] + [
     # Create Permission resources connecting teams to repositories with specified permission levels
     # This creates a Permission resource for each repository and team combination
-    pupboundv1alpha1.Permission{
+    repositoryv1alpha1.Permission{
         metadata: _metadata("{}-{}-{}".format(oxr.spec.parameters.organization, repo, team))
         spec = {
             forProvider = {
@@ -68,7 +71,7 @@ _items = [
         }
     } for repo in oxr.spec.parameters.repositories for team in oxr.spec.parameters.permissions?.teams
 ] + [
-    pupboundv1alpha1.ProviderConfig{
+    v1alpha1.ProviderConfig{
         metadata: _metadata("providerConfigUpbound") | {
             annotations: {
               "krm.kcl.dev/ready" = "True"

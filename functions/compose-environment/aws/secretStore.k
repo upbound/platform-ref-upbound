@@ -1,7 +1,7 @@
 import models.io.upbound.aws.iam.v1beta1 as iamv1beta1
 import models.io.upbound.aws.secretsmanager.v1beta1 as secretsmanagerv1beta1
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
-import spacesModels.v1alpha1 as spacesv1alpha1
+import modelsSpace.v1alpha1 as spacesv1alpha1
 
 _metadata = lambda name: str -> any {
     { annotations = { "krm.kcl.dev/composition-resource-name" = name }}

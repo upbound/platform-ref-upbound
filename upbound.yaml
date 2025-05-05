@@ -3,9 +3,6 @@ kind: Project
 metadata:
   name: configuration-upbound-bootstrap
 spec:
-  architectures:
-  - amd64
-  - arm64
   dependsOn:
   - function: xpkg.upbound.io/crossplane-contrib/function-auto-ready
     version: '>=v0.0.0'
@@ -17,7 +14,7 @@ spec:
     version: v0
     # renovate: datasource=github-releases depName=upbound/provider-upbound
   - provider: xpkg.upbound.io/upbound/provider-upbound
-    version: v0.8.0
+    version: v0.9.1
   description: This is where you can describe your project.
   license: Apache-2.0
   maintainer: Upbound User <user@example.com>

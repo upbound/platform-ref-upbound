@@ -10,8 +10,9 @@ This module handles the creation of Upbound team and robot resources for environ
 5. Secrets containing token credentials for authentication
 """
 
-import providerUpboundModels.v1alpha1 as pupboundv1alpha1
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
+import models.io.upbound.iam.v1alpha1 as iamv1alpha1
+import models.io.upbound.v1alpha1 as v1alpha1
 
 schema TeamRobotTokenSecretRef:
     """
@@ -54,7 +55,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
     """
     [
         # ProviderConfig provider-upbound
-        pupboundv1alpha1.ProviderConfig{
+        v1alpha1.ProviderConfig{
             metadata =  _metadata("providerConfigUpbound") | {
                 annotations = {
                   "krm.kcl.dev/ready" = "True"
@@ -75,7 +76,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
         }
 
         # Robot
-        pupboundv1alpha1.Robot {
+        iamv1alpha1.Robot {
             metadata = _metadata("envRobot") | {
                 name = "{}-robot".format(input.group)
             }
@@ -94,7 +95,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
 
         }
         # Robot Token
-        pupboundv1alpha1.Token {
+        iamv1alpha1.Token {
             metadata = _metadata("envRobotToken") | {
                 name = "{}-robot-token".format(input.group)
             }
@@ -118,7 +119,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
             }
         }
         # Team
-        pupboundv1alpha1.Team {
+        iamv1alpha1.Team {
             metadata: _metadata("envTeam") | {
                 name = "{}-team".format(input.group)
                 if input.teamExternalName:
@@ -139,7 +140,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
 
         }
         # Robot team membership
-        pupboundv1alpha1.RobotTeamMembership {
+        iamv1alpha1.RobotTeamMembership {
             metadata = _metadata("envRobotTeamMembership") | {
                 name = "{}-robot-team-membership".format(input.group)
             }

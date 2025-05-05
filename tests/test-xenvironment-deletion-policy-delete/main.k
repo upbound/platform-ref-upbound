@@ -1,14 +1,13 @@
-import models.io.crossplane.kubernetes.v1alpha1 as kubernetesv1alpha1
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
 import models.io.upbound.aws.iam.v1beta1 as iamv1beta1
 import models.io.upbound.aws.secretsmanager.v1beta1 as secretsmanagerv1beta1
-import models.io.upbound.aws.v1beta1 as awsv1beta1
 import models.io.upbound.dev.meta.v1alpha1 as metav1alpha1
 import models.io.upbound.sa.v1 as sav1
 
 
 _items = [
     metav1alpha1.CompositionTest{
+        metadata.name: "test-xenvironment-deletion-policy-delete"
         spec= {
             assertResources = [
                 sav1.XEnvironment{

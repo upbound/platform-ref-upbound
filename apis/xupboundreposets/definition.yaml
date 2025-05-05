@@ -36,6 +36,16 @@ spec:
                   repositories:
                     additionalProperties:
                       type: object
+                      required:
+                        - public
+                        - publish
+                      properties:
+                        public:
+                          type: boolean
+                          default: false
+                        publish:
+                          type: boolean
+                          default: false
                     type: object
                   tokenSecretRef:
                     type: object

@@ -9,6 +9,7 @@ import models.io.upbound.sa.v1 as sav1
 
 _items = [
     metav1alpha1.CompositionTest{
+        metadata.name: "test-xenvironment"
         spec = {
             assertResources: [
                 kubernetesv1alpha2.Object{
@@ -157,12 +158,12 @@ _items = [
         {
             "Effect": "Allow",
             "Principal": {
-                "Federated": "arn:aws:iam:::oidc-provider/proidc.upbound.io"
+                "Federated": "arn:aws:iam::12345678912:oidc-provider/proidc.upbound.io"
             },
             "Action": "sts:AssumeRoleWithWebIdentity",
             "Condition": {
                 "StringEquals": {
-                    "proidc.upbound.io:sub": "mcp:upbound/solutions-non-prod-example:provider:provider-aws",
+                    "proidc.upbound.io:sub": "mcp:upbound/example:provider:provider-aws",
                     "proidc.upbound.io:aud": "sts.amazonaws.com"
                 }
             }
