@@ -1,7 +1,7 @@
 apiVersion: meta.dev.upbound.io/v1alpha1
 kind: Project
 metadata:
-  name: configuration-upbound-bootstrap
+  name: platform-ref-upbound
 spec:
   dependsOn:
   - function: xpkg.upbound.io/crossplane-contrib/function-auto-ready
@@ -12,7 +12,6 @@ spec:
     version: v1
   - provider: xpkg.upbound.io/upbound/provider-kubernetes
     version: v0
-    # renovate: datasource=github-releases depName=upbound/provider-upbound
   - provider: xpkg.upbound.io/upbound/provider-upbound
     version: v0.9.1
   description: This is where you can describe your project.
@@ -20,5 +19,5 @@ spec:
   maintainer: Upbound User <user@example.com>
   readme: |
     This is where you can add a readme for your project.
-  repository: xpkg.upbound.io/solutions/configuration-upbound-bootstrap
+  repository: xpkg.upbound.io/upbound/platform-ref-upbound
   source: github.com/upbound/project-template

@@ -1,8 +1,0 @@
-apiVersion: contrib.spaces.upbound.io/v1alpha1
-kind: XGroup
-metadata:
-  name: dev
-spec:
-  parameters:
-    organizationName: upbound
-    space: upbound-gcp-us-west-1

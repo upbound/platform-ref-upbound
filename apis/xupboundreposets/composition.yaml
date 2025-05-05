@@ -9,7 +9,7 @@ spec:
   mode: Pipeline
   pipeline:
   - functionRef:
-      name: solutions-configuration-upbound-bootstrapxupboundreposet
+      name: upbound-platform-ref-upboundxupboundreposet
     step: xupboundreposet
   - functionRef:
       name: crossplane-contrib-function-auto-ready
