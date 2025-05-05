@@ -1,0 +1,69 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xupboundreposets.sa.upbound.io
+spec:
+  group: sa.upbound.io
+  names:
+    categories:
+    - crossplane
+    kind: XUpboundRepoSet
+    plural: xupboundreposets
+  versions:
+  - name: v1
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        description: XUpboundRepoSet is the Schema for the XUpboundRepoSet API.
+        properties:
+          spec:
+            description: XUpboundRepoSetSpec defines the desired state of XUpboundRepoSet.
+            properties:
+              parameters:
+                properties:
+                  organization:
+                    type: string
+                  permissions:
+                    properties:
+                      teams:
+                        additionalProperties:
+                          properties:
+                            permission:
+                              type: string
+                          type: object
+                        type: object
+                    type: object
+                  repositories:
+                    additionalProperties:
+                      type: object
+                      required:
+                        - public
+                        - publish
+                      properties:
+                        public:
+                          type: boolean
+                          default: false
+                        publish:
+                          type: boolean
+                          default: false
+                    type: object
+                  tokenSecretRef:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                        default: "token"
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                        default: "default"
+                type: object
+            type: object
+          status:
+            description: XUpboundRepoSetStatus defines the observed state of XUpboundRepoSet.
+            type: object
+        required:
+        - spec
+        type: object
+    served: true

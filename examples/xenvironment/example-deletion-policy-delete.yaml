@@ -1,0 +1,29 @@
+apiVersion: sa.upbound.io/v1
+kind: XEnvironment
+metadata:
+  name: example
+spec:
+  parameters:
+    # This example demonstrates the Delete policy which will delete all managed resources 
+    # when the XEnvironment is deleted, unlike the default Orphan policy.
+    # CAUTION: Use this carefully in production environments.
+    deletionPolicy: Delete
+    aws:
+      accountId: "12345678912"
+      credsSecretRef:
+        name: aws-creds-example
+        namespace: default
+      region: us-east-1
+      providerRole: {}
+      sharedSecret: {}
+    upbound:
+      initKubeconfigSecretRef:
+        name: init-kubeconfig
+      tokenSecretRef:
+        name: upbound-token
+status:
+  upbound:
+    bootstrapCtp: bootstrap
+    bootstrapGroup: solutions-non-prod
+    org: upbound
+    spaceHost: upbound-aws-us-east-1.space.mxe.upbound.io
