@@ -14,10 +14,13 @@ spec:
     version: v0
   - provider: xpkg.upbound.io/upbound/provider-upbound
     version: v0.9.1
-  description: This is where you can describe your project.
+  description: |
+    platform-ref-upbound enables declarative bootstrapping of Upbound Spaces
+    environments with Cloud Provider integration through a GitOps approach.
   license: Apache-2.0
-  maintainer: Upbound User <user@example.com>
+  maintainer: Upbound <info@upbound.io>
   readme: |
-    This is where you can add a readme for your project.
+    platform-ref-upbound enables declarative bootstrapping of Upbound Spaces
+    environments with Cloud Provider integration through a GitOps approach.
   repository: xpkg.upbound.io/upbound/platform-ref-upbound
-  source: github.com/upbound/project-template
+  source: github.com/upbound/platform-ref-upbound
