@@ -32,6 +32,7 @@ jobs:
 
       # doesn't work with plain token when pushing otherwise
       - name: Login to xpkg with robot
+        if: env.UP_ROBOT_ID != '' && env.UP_API_TOKEN != ''
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           registry: xpkg.upbound.io
