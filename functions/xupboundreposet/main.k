@@ -39,7 +39,7 @@ _items = [
             # Use Orphan deletion policy to avoid repository deletion when XUpboundRepoSet is deleted
             deletionPolicy = "Orphan"
             forProvider = {
-                name =repo
+                name = repo
                 organizationName = oxr.spec.parameters.organization
                 public = opts.public
                 publish = opts.publish
