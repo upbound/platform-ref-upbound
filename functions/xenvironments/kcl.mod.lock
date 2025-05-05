@@ -3,7 +3,11 @@
     name = "models"
     full_name = "models_0.0.1"
     version = "0.0.1"
-  [dependencies.modelsSpace]
-    name = "modelsSpace"
-    full_name = "modelSpace_0.0.1"
-    version = "0.0.1"
+  [dependencies.spaces]
+    name = "spaces"
+    full_name = "kcl-modules_spaces_1.12.0"
+    version = "1.12.0"
+    sum = "9tKyGSjYJoIM5QHiNZUKLSb9/jMPMALM1ktgtdsdUyA="
+    reg = "xpkg.upbound.io"
+    repo = "upbound/kcl-modules_spaces"
+    oci_tag = "1.12.0"
