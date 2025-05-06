@@ -32,6 +32,7 @@ This upbound project enables declarative bootstrapping of Upbound Spaces environ
   - AWS Secrets Manager integration
   - Upbound Team with Robot setup
   - Bootstrap secret synchronization
+- **Kubernetes Controllers**: Support for building and deploying third-party controllers like ArgoCD
 
 ## Usage
 
@@ -212,6 +213,42 @@ cat <<EOF | kubectl apply -f -
               name: destination-secret-name
               namespace: default
 EOF
+```
+
+## Building and Deploying Controllers
+
+This repository includes a GitHub workflow for building and deploying controllers like ArgoCD. Controllers are a package type that bundles control plane software from the Kubernetes ecosystem.
+
+To build an ArgoCD controller:
+
+1. Go to your GitHub repository Actions tab
+2. Select the "Build and Push ArgoCD Controller" workflow
+3. Click "Run workflow"
+4. Enter the following parameters:
+   - ArgoCD version (default: 7.8.8)
+   - Upbound account name
+   - Controller version (default: v7.8.8)
+   - Select whether to push to registry
+
+The workflow will:
+- Pull the ArgoCD Helm chart
+- Extract CRDs
+- Package it as an Upbound Controller
+- Push to your Upbound OCI registry (if selected)
+- Generate a deployment manifest
+
+Once built, you can deploy the controller to your control plane:
+
+```bash
+# Download the deployment manifest from the workflow artifacts
+# Apply to your control plane
+kubectl apply -f deploy-argocd-controller.yaml
+
+# Wait for the controller to become ready
+kubectl get controllers.pkg
+
+# Check the ArgoCD pods
+kubectl -n argo-system get pods
 ```
 
 ## Architecture
