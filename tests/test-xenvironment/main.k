@@ -43,6 +43,9 @@ _items = [
                         name: "example-ctp"
                     }
                     spec: {
+                        readiness: {
+                            policy: "DeriveFromObject"
+                        }
                         deletionPolicy: "Orphan"
                         managementPolicies: ["*"]
                         forProvider: {

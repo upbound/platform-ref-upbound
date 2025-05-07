@@ -138,6 +138,9 @@ if _initReady:
                     name = "{}-ctp".format(oxrMeta.name)
                 }
                 spec = {
+                    readiness: {
+                        policy: "DeriveFromObject"
+                    }
                     deletionPolicy = oxrSpec.parameters.deletionPolicy
                     forProvider = {
                         manifest = {
@@ -172,6 +175,9 @@ if _initReady:
                     name = envGroupName
                 }
                 spec = {
+                    readiness: {
+                        policy: "DeriveFromObject"
+                    }
                     deletionPolicy = oxrSpec.parameters.deletionPolicy
                     forProvider = {
                         manifest = {
