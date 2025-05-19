@@ -4,6 +4,7 @@ It automates the creation and management of Upbound Spaces environments with
 integrated AWS cloud resources. The function handles:
 - Environment initialization using bootstrap credentials
 - Control plane creation in Upbound Spaces
+- Server Secret for Argo
 - Kubernetes provider configurations for various scopes (space/group/control plane)
 - AWS IAM role and policy setup for cross-service authentication
 - Secret management between AWS Secrets Manager and Upbound Spaces
@@ -24,6 +25,8 @@ import aws.crossplaneRole as awsXPRole
 import pKubernetesHelper
 import teamRobot
 import bootstrapSecretSync
+import argo
+import utils
 
 oxr = option("params").oxr # observed composite resource
 ocds = option("params").ocds # observed composed resources
@@ -32,10 +35,6 @@ dcds = option("params").dcds # desired composed resources
 
 oxrMeta =  sav1.XEnvironment.metadata{**oxr.metadata}
 oxrSpec =  sav1.XEnvironment.spec{**oxr.spec}
-
-_metadata = lambda name: str -> any {
-    { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
-}
 
 # =========================================================================
 # Initial Kubeconfig Processing
@@ -51,6 +50,7 @@ _metadata = lambda name: str -> any {
 # 3. Creates resources only after the metadata is properly established
 
 _initKubeconfigServerUrl = Undefined
+_initKubeconfigServerCaData = Undefined
 _upboundSpaceHostFromKubeconfig = Undefined
 _upboundBootstrapGroupFromKubeconfig = Undefined
 _upboundBootstrapCtpFromKubeconfig = Undefined
@@ -61,6 +61,7 @@ _upboundOrgFromKubeconfig = Undefined
 _initialKubeconfig = ocds.observedCtpKubeconfig?.Resource?.status?.atProvider?.manifest?.data?.kubeconfig
 if _initialKubeconfig:
     _initKubeconfigServerUrl = yaml.decode(base64.decode(_initialKubeconfig)).clusters[0]?.cluster?.server
+    _initKubeconfigServerCaData = yaml.decode(base64.decode(_initialKubeconfig)).clusters[0]?.cluster?["certificate-authority-data"]
     _upboundSpaceHostFromKubeconfig = regex.replace(_initKubeconfigServerUrl, "https:\/\/([.\w-]+)(?:\/[.\w-]+){8}", "$1")
     _upboundBootstrapGroupFromKubeconfig = regex.replace(_initKubeconfigServerUrl, "https:\/(?:\/[.\w-]+){5}\/([.\w-]+)(?:\/[.\w-]+){3}", "$1")
     _upboundBootstrapCtpFromKubeconfig = regex.replace(_initKubeconfigServerUrl, "https:\/(?:\/[.\w-]+){7}\/([.\w-]+)(?:\/[.\w-]+)", "$1")
@@ -90,7 +91,7 @@ _initItems = [
     # observed kubeconfig for bootstrap-ctp, will be used to derive settings
     # like upbound org, bootstrap-group, bootstrap-controlplane and space host
     kubernetesv1alpha2.Object{
-        metadata = _metadata("observedCtpKubeconfig") | {
+        metadata = utils._metadata("observedCtpKubeconfig") | {
             name = "{}-bootstrap-ctp-kubeconfig-observed".format(oxrMeta.name)
         }
         spec = {
@@ -134,7 +135,7 @@ if _initReady:
         # Main controlplane for the environment
         if oxrSpec.parameters.upbound.createCtp:
             kubernetesv1alpha2.Object{
-                metadata = _metadata("ctp") | {
+                metadata = utils._metadata("ctp") | {
                     name = "{}-ctp".format(oxrMeta.name)
                 }
                 spec = {
@@ -171,13 +172,10 @@ if _initReady:
 
         if oxrSpec.parameters.upbound.createGroup:
             kubernetesv1alpha2.Object{
-                metadata = _metadata("envGroup") | {
+                metadata = utils._metadata("envGroup") | {
                     name = envGroupName
                 }
                 spec = {
-                    readiness: {
-                        policy: "DeriveFromObject"
-                    }
                     deletionPolicy = oxrSpec.parameters.deletionPolicy
                     forProvider = {
                         manifest = {
@@ -194,6 +192,33 @@ if _initReady:
                 }
             }
     ]
+    if oxrSpec.parameters.upbound.createArgoSecret:
+        # =========================================================================
+        # Argo Server Secret Creation
+        # =========================================================================
+        # - Observe the Access Token (PersonalAccessToken or RobotToken)
+        # - Create Argo Server Secret when Access Token is available
+
+        _upboundItems += utils.observeSecret(utils.ObserveSecret{
+            ctp = oxrMeta.name
+            name = oxrSpec.parameters.upbound.tokenSecretRef.name
+            namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
+            providerConfigName = "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
+            resourceName = "observed-access-token"
+        })
+
+        _accessToken = base64.decode(ocds["observed-access-token"]?.Resource?.status?.atProvider?.manifest?.data?.token)
+        if _accessToken:
+            _upboundItems += argo.argoServerSecret(argo.ArgoServerSecret{
+                accessToken: _accessToken
+                org = _oxrStatusUpbound.org
+                group = envGroupName
+                ctp = oxrMeta.name
+                providerConfigName: "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
+                serverCaData: _initKubeconfigServerCaData
+                spaceHost = _oxrStatusUpbound.spaceHost
+            })
+
     if oxrSpec.parameters.upbound.createCtp:
         _upboundItems += pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
             # controlplane level providerconfig for provider-kubernetes

@@ -2,9 +2,7 @@ import models.io.upbound.aws.iam.v1beta1 as iamv1beta1
 import models.io.upbound.aws.secretsmanager.v1beta1 as secretsmanagerv1beta1
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
 import spaces.v1alpha1 as spacesv1alpha1
-_metadata = lambda name: str -> any {
-    { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
-}
+import utils
 
 schema AWSSecretStoreInput:
     accountId: str
@@ -20,7 +18,7 @@ schema AWSSecretStoreInput:
 getSecretStoreItems = lambda awsParams: AWSSecretStoreInput -> [any] {[
     ### Needed until SharedSecretStore supports IAM Roles ###
     iamv1beta1.User {
-        metadata = _metadata("iamUserSecretRead") | {
+        metadata = utils._metadata("iamUserSecretRead") | {
             name = "{}-secrets-read".format(awsParams.namePrefix)
         }
         spec = {
@@ -32,7 +30,7 @@ getSecretStoreItems = lambda awsParams: AWSSecretStoreInput -> [any] {[
         }
     }
     iamv1beta1.Policy {
-        metadata = _metadata("iamPolicySecretRead") | {
+        metadata = utils._metadata("iamPolicySecretRead") | {
             name = "{}-secrets-read".format(awsParams.namePrefix)
         }
         spec = {
@@ -61,7 +59,7 @@ getSecretStoreItems = lambda awsParams: AWSSecretStoreInput -> [any] {[
         }
     }
     iamv1beta1.UserPolicyAttachment {
-        metadata = _metadata("iamPolicySecretReadAttach") | {
+        metadata = utils._metadata("iamPolicySecretReadAttach") | {
             name = "{}-secrets-read".format(awsParams.namePrefix)
         }
         spec = {
@@ -80,7 +78,7 @@ getSecretStoreItems = lambda awsParams: AWSSecretStoreInput -> [any] {[
         }
     }
     iamv1beta1.AccessKey {
-        metadata = _metadata("iamUserAccessKey") | {
+        metadata = utils._metadata("iamUserAccessKey") | {
             name = "{}-secrets-read".format(awsParams.namePrefix)
         }
         spec = {
@@ -101,7 +99,7 @@ getSecretStoreItems = lambda awsParams: AWSSecretStoreInput -> [any] {[
     }
     # copy the iam access key secret
     kubernetesv1alpha2.Object{
-        metadata = _metadata("envIamUserKeySecret") | {
+        metadata = utils._metadata("envIamUserKeySecret") | {
             name = "{}-secrets-read-access-key".format(awsParams.envName)
         }
         spec = {
@@ -135,7 +133,7 @@ getSecretStoreItems = lambda awsParams: AWSSecretStoreInput -> [any] {[
     }
     ### end iam user workaroung ###
     secretsmanagerv1beta1.Secret {
-        metadata = _metadata("secretsmanagerSecret") | {
+        metadata = utils._metadata("secretsmanagerSecret") | {
             name = "{}-secretsmanager-secret".format(awsParams.namePrefix)
             annotations = {
                 if awsParams.secretsManagerSecretArn:
@@ -157,7 +155,7 @@ getSecretStoreItems = lambda awsParams: AWSSecretStoreInput -> [any] {[
     }
     # Shared secret store mapped to secret on cloud-provider
     kubernetesv1alpha2.Object{
-        metadata = _metadata("sharedSecretsStore") | {
+        metadata = utils._metadata("sharedSecretsStore") | {
             name = "{}-sss".format(awsParams.ctpName)
         }
         spec = {
@@ -205,7 +203,7 @@ getSecretStoreItems = lambda awsParams: AWSSecretStoreInput -> [any] {[
     # Shared secret which will populate initial secret from cloud into
     # the main controlplane of the environment
     kubernetesv1alpha2.Object{
-        metadata = _metadata("sharedExternalSecret") | {
+        metadata = utils._metadata("sharedExternalSecret") | {
             name = "{}-ses".format(awsParams.ctpName)
         }
         spec = {

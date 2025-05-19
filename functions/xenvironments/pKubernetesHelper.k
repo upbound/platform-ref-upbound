@@ -10,6 +10,7 @@ This module supports creating provider configurations at different scopes:
 
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
 import models.io.crossplane.kubernetes.v1alpha1 as kubernetesv1alpha1
+import utils
 
 schema UpboundTokenSecretRef:
     name: str
@@ -29,10 +30,6 @@ schema UpboundProviderConfigInput:
     prefix?: str    # Optional: Prefix for space-level access (when no group/ctp provided)
     providerConfigName: str  # Name of the provider config to reference
     upboundTokenSecretRef: UpboundTokenSecretRef        # Reference to the Upbound authentication token
-
-_metadata = lambda name: str -> any {
-    { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
-}
 
 # Helper for generating a controlplane, space or group-level kubeconfig for provider-kubernetes on upbound
 # This function creates a kubeconfig that targets the appropriate API endpoint based on the scope:
@@ -144,7 +141,7 @@ upboundProviderConfig = lambda config: UpboundProviderConfigInput -> any {
    """
    [
         kubernetesv1alpha2.Object{
-            metadata = _metadata("{}Kubeconfig".format(resourceName(config.group, config.ctp))) | {
+            metadata = utils._metadata("{}Kubeconfig".format(resourceName(config.group, config.ctp))) | {
                 name = "{}-kubeconfig".format(configName(config.group, config.ctp, config.prefix))
             }
             spec = {
@@ -172,7 +169,7 @@ upboundProviderConfig = lambda config: UpboundProviderConfigInput -> any {
         }
 
         kubernetesv1alpha1.ProviderConfig{
-            metadata = _metadata("{}ProviderConfig".format(resourceName(config.group, config.ctp))) | {
+            metadata = utils._metadata("{}ProviderConfig".format(resourceName(config.group, config.ctp))) | {
                 name = configName(config.group, config.ctp, config.prefix)
                 annotations = {
                   "krm.kcl.dev/ready" = "True"
@@ -203,7 +200,7 @@ upboundProviderConfig = lambda config: UpboundProviderConfigInput -> any {
         {
             apiVersion = "apiextensions.crossplane.io/v1alpha1"
             kind = "Usage"
-            metadata = _metadata("{}Usage".format(resourceName(config.group, config.ctp))) | {
+            metadata = utils._metadata("{}Usage".format(resourceName(config.group, config.ctp))) | {
                 name = "{}-kubeconfig".format(configName(config.group, config.ctp, config.prefix))
             }
             spec = {

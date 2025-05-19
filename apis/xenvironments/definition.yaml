@@ -80,6 +80,9 @@ spec:
                       createCtp:
                         type: boolean
                         default: true
+                      createArgoSecret:
+                        type: boolean
+                        default: true
                       secretSync:
                         type: array
                         items:

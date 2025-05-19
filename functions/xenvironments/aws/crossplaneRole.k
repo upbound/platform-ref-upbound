@@ -10,10 +10,7 @@ to and manage AWS services. It creates:
 """
 
 import models.io.upbound.aws.iam.v1beta1 as iamv1beta1
-
-_metadata = lambda name: str -> any {
-    { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
-}
+import utils
 
 schema AWSXPRoleInput:
     """
@@ -43,7 +40,7 @@ getXPRoleItems = lambda awsParams: AWSXPRoleInput -> [any] {
     """
     [
     iamv1beta1.Role {
-        metadata = _metadata("iamAdminRole") | {
+        metadata = utils._metadata("iamAdminRole") | {
             name = "{}-admin".format(awsParams.namePrefix)
         }
         spec = {
@@ -74,7 +71,7 @@ getXPRoleItems = lambda awsParams: AWSXPRoleInput -> [any] {
         }
     }
     iamv1beta1.RolePolicyAttachment {
-        metadata = _metadata("iamAdminRoleAttach") | {
+        metadata = utils._metadata("iamAdminRoleAttach") | {
             name = "{}-admin".format(awsParams.namePrefix)
         }
         spec = {
@@ -91,7 +88,7 @@ getXPRoleItems = lambda awsParams: AWSXPRoleInput -> [any] {
         }
     }
     iamv1beta1.OpenIDConnectProvider {
-        metadata = _metadata("upboundOidcProvider") | {
+        metadata = utils._metadata("upboundOidcProvider") | {
             name = "{}-oidc-provider".format(awsParams.namePrefix)
             annotations = {
                 if awsParams.oidcProviderArn:
