@@ -304,13 +304,6 @@ spec:
   - **namespace**: Namespace for the secret (defaults to "default")
   - **key**: Key in the secret (defaults to "token")
 
-## Caveats
-
-### External models
-
-External models (like for provider-upbound and upbound spaces) are imported with `kcl import -m crd crd.yaml` from kubernetes crds.
-Imports need to be fixed after crd import to `import ..k8s.apimachinery.pkg.apis.meta.v1`
-
 ## Development
 
 ### Testing
