@@ -4,7 +4,8 @@ import models.io.upbound.aws.iam.v1beta1 as iamv1beta1
 import models.io.upbound.aws.secretsmanager.v1beta1 as secretsmanagerv1beta1
 import models.io.upbound.aws.v1beta1 as awsv1beta1
 import models.io.upbound.dev.meta.v1alpha1 as metav1alpha1
-import models.io.upbound.sa.v1 as sav1
+import json
+import base64
 
 
 _items = [
@@ -585,6 +586,74 @@ _items = [
                     }
                 }
 
+                kubernetesv1alpha2.Object{
+                    metadata = {
+                        name = "example-observed-access-token-observed"
+                    }
+                    spec = {
+                        forProvider = {
+                            manifest = {
+                                apiVersion = "v1"
+                                kind = "Secret"
+                                metadata = {
+                                    name = "upbound-token"
+                                    namespace = "default"
+                                }
+                            }
+                        }
+                        managementPolicies = [
+                            "Observe"
+                        ]
+                        providerConfigRef = {
+                            name = "bootstrap-ctp"
+                        }
+                    }
+                }
+
+                kubernetesv1alpha2.Object{
+                    metadata = {
+                        name = "example-ctp-argocd-secret"
+                    }
+                    spec = {
+                        forProvider = {
+                            manifest = {
+                                apiVersion: "v1"
+                                kind: "Secret"
+                                metadata: {
+                                    name: "solutions-non-prod-example-example"
+                                    namespace: "argocd"
+                                    labels: {
+                                        "argocd.argoproj.io/secret-type": "cluster"
+                                    }
+                                }
+                                type: "Opaque"
+                                stringData: {
+                                    name: "solutions-non-prod-example-example"
+                                    server: "https://upbound-aws-us-east-1.space.mxe.upbound.io/apis/spaces.upbound.io/v1beta1/namespaces/solutions-non-prod-example/controlplanes/example/k8s"
+                                    config: json.encode({
+                                        execProviderConfig: {
+                                            apiVersion: "client.authentication.k8s.io/v1"
+                                            command: "up"
+                                            args: [
+                                                "org"
+                                                "token"
+                                            ]
+                                            env: {
+                                                "ORGANIZATION": "upbound"
+                                                "UP_TOKEN": "uptest-token"
+                                            }
+                                        }
+                                        tlsClientConfig: {
+                                            insecure: False
+                                            caData: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJ6ekNDQVhTZ0F3SUJBZ0lSQUtuaU1IS1lkN01oQUJDbzMxRHI3cDh3Q2dZSUtvWkl6ajBFQXdJd056RUwKTUFrR0ExVUVCaE1DVlZNeEVEQU9CZ05WQkFvVEIzVndZbTkxYm1ReEZqQVVCZ05WQkFNVERWVndZbTkxYm1RcwpJRWx1WXk0d0hoY05NalV3TXpBeU1EQXpPVE0wV2hjTk1qWXdNekF5TURBek9UTTBXakEzTVFzd0NRWURWUVFHCkV3SlZVekVRTUE0R0ExVUVDaE1IZFhCaWIzVnVaREVXTUJRR0ExVUVBeE1OVlhCaWIzVnVaQ3dnU1c1akxqQloKTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEEwSUFCTTUyUE5BWFNuQ0pHNzdWbmU2K01VVWllSW5SdmR4YQpOaDlqeW5NS3RMM2QrdWNTMTQ0R3ZLbFpiS3l1dXZzZDhrSkJyZWg3V1A3Sk9pcDFyRmU1T2d5allUQmZNQTRHCkExVWREd0VCL3dRRUF3SUJwakFkQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJd0R3WUQKVlIwVEFRSC9CQVV3QXdFQi96QWRCZ05WSFE0RUZnUVUydmJKZTBVbzJjMmlsODdXOGhISWRUdHZVeWd3Q2dZSQpLb1pJemowRUF3SURTUUF3UmdJaEFLSDlLTWFHelVjcVo3NHR1aVI5VFd6S2tnakRMNWlTRWZmM0ZENktaZy9PCkFpRUFwVU8yMGZtRU9Ua0hsUHN2MTh2T1VVby8rRWJnSXo3M00waG5VQysySFJFPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
+                                        }
+                                    })
+                                }
+                            }
+                        }
+                    }
+                }
+
                 kubernetesv1alpha1.ProviderConfig{
                     metadata = {
                         name = "example-space"
@@ -613,35 +682,39 @@ _items = [
             compositionPath: "apis/xenvironments/composition.yaml"
             xrPath: "examples/xenvironment/example.yaml"
             xrdPath: "apis/xenvironments/definition.yaml"
-            context: []
-            extraResources: [
-                sav1.XEnvironment{
+            observedResources = [
+                kubernetesv1alpha2.Object{
                     metadata = {
-                        name = "example"
-                    }
-                    spec = {}
-                    status = {
-                        upbound = {
-                            bootstrapCtp = "foo"
-                            bootstrapGroup = "bar"
-                            org = "upbound"
-                            spaceHost = "foo"
+                        name = "example-observed-access-token-observed"
+                        annotations: {
+                            "crossplane.io/composition-resource-name": "observed-access-token"
                         }
                     }
-                }
-            ]
-            observedResources = [
-                sav1.XEnvironment{
-                    metadata = {
-                        name = "example"
+                    spec = {
+                        forProvider = {
+                            manifest = {
+                                apiVersion = "v1"
+                                kind = "Secret"
+                                metadata = {
+                                    name = "upbound-token"
+                                    namespace = "default"
+                                }
+                            }
+                        }
+                        managementPolicies = [
+                            "Observe"
+                        ]
+                        providerConfigRef = {
+                            name = "bootstrap-ctp"
+                        }
                     }
-                    spec = {}
                     status = {
-                        upbound = {
-                            bootstrapCtp = "foo"
-                            bootstrapGroup = "bar"
-                            org = "upbound"
-                            spaceHost = "foo"
+                        atProvider = {
+                            manifest = {
+                                data = {
+                                    token = base64.encode("uptest-token")
+                                }
+                            }
                         }
                     }
                 }
@@ -664,7 +737,7 @@ _items = [
                         atProvider = {
                             manifest = {
                                 data = {
-                                    kubeconfig = "YXBpVmVyc2lvbjogdjEKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICAgIGluc2VjdXJlLXNraXAtdGxzLXZlcmlmeTogdHJ1ZQogICAgc2VydmVyOiBodHRwczovL3VwYm91bmQtYXdzLXVzLWVhc3QtMS5zcGFjZS5teGUudXBib3VuZC5pby9hcGlzL3NwYWNlcy51cGJvdW5kLmlvL3YxYmV0YTEvbmFtZXNwYWNlcy9zb2x1dGlvbnMtbm9uLXByb2QvY29udHJvbHBsYW5lcy9ib290c3RyYXAvazhzCiAgbmFtZTogdXBib3VuZApjb250ZXh0czoKLSBjb250ZXh0OgogICAgY2x1c3RlcjogdXBib3VuZAogICAgZXh0ZW5zaW9uczoKICAgIC0gZXh0ZW5zaW9uOgogICAgICAgIGFwaVZlcnNpb246IHVwYm91bmQuaW8vdjFhbHBoYTEKICAgICAgICBraW5kOiBTcGFjZUV4dGVuc2lvbgogICAgICAgIHNwZWM6CiAgICAgICAgICBjbG91ZDoKICAgICAgICAgICAgb3JnYW5pemF0aW9uOiB1cGJvdW5kCiAgICAgIG5hbWU6IHNwYWNlcy51cGJvdW5kLmlvL3NwYWNlCiAgICBuYW1lc3BhY2U6IGRlZmF1bHQKICAgIHVzZXI6IHVwYm91bmQKICBuYW1lOiB1cGJvdW5kCmN1cnJlbnQtY29udGV4dDogdXBib3VuZApraW5kOiBDb25maWcKcHJlZmVyZW5jZXM6IHt9CnVzZXJzOgotIG5hbWU6IHVwYm91bmQKICB1c2VyOgogICAgZXhlYzoKICAgICAgYXBpVmVyc2lvbjogY2xpZW50LmF1dGhlbnRpY2F0aW9uLms4cy5pby92MQogICAgICBhcmdzOgogICAgICAtIG9yZ2FuaXphdGlvbgogICAgICAtIHRva2VuCiAgICAgIGNvbW1hbmQ6IHVwCiAgICAgIGVudjoKICAgICAgLSBuYW1lOiBPUkdBTklaQVRJT04KICAgICAgICB2YWx1ZTogdXBib3VuZAogICAgICAtIG5hbWU6IFVQX1BST0ZJTEUKICAgICAgICB2YWx1ZTogZGVmYXVsdAogICAgICBpbnRlcmFjdGl2ZU1vZGU6IElmQXZhaWxhYmxlCiAgICAgIHByb3ZpZGVDbHVzdGVySW5mbzogZmFsc2UK"
+                                    kubeconfig = "YXBpVmVyc2lvbjogdjEKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICAgIGNlcnRpZmljYXRlLWF1dGhvcml0eS1kYXRhOiBMUzB0TFMxQ1JVZEpUaUJEUlZKVVNVWkpRMEZVUlMwdExTMHRDazFKU1VKNmVrTkRRVmhUWjBGM1NVSkJaMGxTUVV0dWFVMUlTMWxrTjAxb1FVSkRiek14UkhJM2NEaDNRMmRaU1V0dldrbDZhakJGUVhkSmQwNTZSVXdLVFVGclIwRXhWVVZDYUUxRFZsWk5lRVZFUVU5Q1owNVdRa0Z2VkVJelZuZFpiVGt4WW0xUmVFWnFRVlZDWjA1V1FrRk5WRVJXVm5kWmJUa3hZbTFSY3dwSlJXeDFXWGswZDBob1kwNU5hbFYzVFhwQmVVMUVRWHBQVkUwd1YyaGpUazFxV1hkTmVrRjVUVVJCZWs5VVRUQlhha0V6VFZGemQwTlJXVVJXVVZGSENrVjNTbFpWZWtWUlRVRTBSMEV4VlVWRGFFMUlaRmhDYVdJelZuVmFSRVZYVFVKUlIwRXhWVVZCZUUxT1ZsaENhV0l6Vm5WYVEzZG5VMWMxYWt4cVFsb0tUVUpOUjBKNWNVZFRUVFE1UVdkRlIwTkRjVWRUVFRRNVFYZEZTRUV3U1VGQ1RUVXlVRTVCV0ZOdVEwcEhOemRXYm1VMkswMVZWV2xsU1c1U2RtUjRZUXBPYURscWVXNU5TM1JNTTJRcmRXTlRNVFEwUjNaTGJGcGlTM2wxZFhaelpEaHJTa0p5WldnM1YxQTNTazlwY0RGeVJtVTFUMmQ1YWxsVVFtWk5RVFJIQ2tFeFZXUkVkMFZDTDNkUlJVRjNTVUp3YWtGa1FtZE9Wa2hUVlVWR2FrRlZRbWRuY2tKblJVWkNVV05FUVZGWlNVdDNXVUpDVVZWSVFYZEpkMFIzV1VRS1ZsSXdWRUZSU0M5Q1FWVjNRWGRGUWk5NlFXUkNaMDVXU0ZFMFJVWm5VVlV5ZG1KS1pUQlZiekpqTW1sc09EZFhPR2hJU1dSVWRIWlZlV2QzUTJkWlNRcExiMXBKZW1vd1JVRjNTVVJUVVVGM1VtZEphRUZMU0RsTFRXRkhlbFZqY1ZvM05IUjFhVkk1VkZkNlMydG5ha1JNTldsVFJXWm1NMFpFTmt0YVp5OVBDa0ZwUlVGd1ZVOHlNR1p0UlU5VWEwaHNVSE4yTVRoMlQxVlZieThyUldKblNYbzNNMDB3YUc1VlF5c3lTRkpGUFFvdExTMHRMVVZPUkNCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2c9PQogICAgc2VydmVyOiBodHRwczovL3VwYm91bmQtYXdzLXVzLWVhc3QtMS5zcGFjZS5teGUudXBib3VuZC5pby9hcGlzL3NwYWNlcy51cGJvdW5kLmlvL3YxYmV0YTEvbmFtZXNwYWNlcy9zb2x1dGlvbnMtbm9uLXByb2QvY29udHJvbHBsYW5lcy9ib290c3RyYXAvazhzCiAgbmFtZTogdXBib3VuZApjb250ZXh0czoKLSBjb250ZXh0OgogICAgY2x1c3RlcjogdXBib3VuZAogICAgZXh0ZW5zaW9uczoKICAgIC0gZXh0ZW5zaW9uOgogICAgICAgIGFwaVZlcnNpb246IHVwYm91bmQuaW8vdjFhbHBoYTEKICAgICAgICBraW5kOiBTcGFjZUV4dGVuc2lvbgogICAgICAgIHNwZWM6CiAgICAgICAgICBjbG91ZDoKICAgICAgICAgICAgb3JnYW5pemF0aW9uOiB1cGJvdW5kCiAgICAgIG5hbWU6IHNwYWNlcy51cGJvdW5kLmlvL3NwYWNlCiAgICBuYW1lc3BhY2U6IGRlZmF1bHQKICAgIHVzZXI6IHVwYm91bmQKICBuYW1lOiB1cGJvdW5kCmN1cnJlbnQtY29udGV4dDogdXBib3VuZApraW5kOiBDb25maWcKcHJlZmVyZW5jZXM6IHt9CnVzZXJzOgotIG5hbWU6IHVwYm91bmQKICB1c2VyOgogICAgZXhlYzoKICAgICAgYXBpVmVyc2lvbjogY2xpZW50LmF1dGhlbnRpY2F0aW9uLms4cy5pby92MQogICAgICBhcmdzOgogICAgICAtIG9yZ2FuaXphdGlvbgogICAgICAtIHRva2VuCiAgICAgIGNvbW1hbmQ6IHVwCiAgICAgIGVudjoKICAgICAgLSBuYW1lOiBPUkdBTklaQVRJT04KICAgICAgICB2YWx1ZTogdXBib3VuZAogICAgICAtIG5hbWU6IFVQX1BST0ZJTEUKICAgICAgICB2YWx1ZTogZGVmYXVsdAogICAgICBpbnRlcmFjdGl2ZU1vZGU6IElmQXZhaWxhYmxlCiAgICAgIHByb3ZpZGVDbHVzdGVySW5mbzogZmFsc2UK"
                                 }
                             }
                         }

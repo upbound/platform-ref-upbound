@@ -17,20 +17,16 @@ Parameters:
 import models.io.upbound.sa.v1 as sav1
 import models.io.upbound.repository.v1alpha1 as repositoryv1alpha1
 import models.io.upbound.v1alpha1 as v1alpha1
+import utils
 
 # Extract the XUpboundRepoSet object from the parameters
 oxr = sav1.XUpboundRepoSet{**option("params").oxr}
-
-# Helper function to create metadata with composition resource name annotation
-_metadata = lambda name: str -> any {
-    { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
-}
 
 # Generate list of resources to create
 _items = [
     # Create Repository resources for each repository specified in the parameters
     repositoryv1alpha1.Repository{
-        metadata: _metadata("{}-{}".format(oxr.spec.parameters.organization, repo)) | {
+        metadata: utils._metadata("{}-{}".format(oxr.spec.parameters.organization, repo)) | {
             annotations: {
                 "crosslane.io/external-name": repo
             }
@@ -53,7 +49,7 @@ _items = [
     # Create Permission resources connecting teams to repositories with specified permission levels
     # This creates a Permission resource for each repository and team combination
     repositoryv1alpha1.Permission{
-        metadata: _metadata("{}-{}-{}".format(oxr.spec.parameters.organization, repo, team))
+        metadata: utils._metadata("{}-{}-{}".format(oxr.spec.parameters.organization, repo, team))
         spec = {
             forProvider = {
                 organizationName = oxr.spec.parameters.organization
@@ -72,7 +68,7 @@ _items = [
     } for repo in oxr.spec.parameters.repositories for team in oxr.spec.parameters.permissions?.teams
 ] + [
     v1alpha1.ProviderConfig{
-        metadata: _metadata("providerConfigUpbound") | {
+        metadata: utils._metadata("providerConfigUpbound") | {
             annotations: {
               "krm.kcl.dev/ready" = "True"
             }

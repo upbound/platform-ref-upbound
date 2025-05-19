@@ -13,6 +13,7 @@ This module handles the creation of Upbound team and robot resources for environ
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
 import models.io.upbound.iam.v1alpha1 as iamv1alpha1
 import models.io.upbound.v1alpha1 as v1alpha1
+import utils
 
 schema TeamRobotTokenSecretRef:
     """
@@ -36,10 +37,6 @@ schema TeamWithRobotInput:
     teamExternalName?: str
     createGroupAdminBinding?: bool
 
-_metadata = lambda name: str -> any {
-    { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
-}
-
 teamWithRobot = lambda input: TeamWithRobotInput -> any {
     """
     Creates team and robot resources for Upbound Space environments.
@@ -56,7 +53,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
     [
         # ProviderConfig provider-upbound
         v1alpha1.ProviderConfig{
-            metadata =  _metadata("providerConfigUpbound") | {
+            metadata =  utils._metadata("providerConfigUpbound") | {
                 annotations = {
                   "krm.kcl.dev/ready" = "True"
                 }
@@ -77,7 +74,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
 
         # Robot
         iamv1alpha1.Robot {
-            metadata = _metadata("envRobot") | {
+            metadata = utils._metadata("envRobot") | {
                 name = "{}-robot".format(input.group)
             }
             spec = {
@@ -96,7 +93,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
         }
         # Robot Token
         iamv1alpha1.Token {
-            metadata = _metadata("envRobotToken") | {
+            metadata = utils._metadata("envRobotToken") | {
                 name = "{}-robot-token".format(input.group)
             }
             spec = {
@@ -120,7 +117,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
         }
         # Team
         iamv1alpha1.Team {
-            metadata: _metadata("envTeam") | {
+            metadata: utils._metadata("envTeam") | {
                 name = "{}-team".format(input.group)
                 if input.teamExternalName:
                     annotations: {
@@ -141,7 +138,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
         }
         # Robot team membership
         iamv1alpha1.RobotTeamMembership {
-            metadata = _metadata("envRobotTeamMembership") | {
+            metadata = utils._metadata("envRobotTeamMembership") | {
                 name = "{}-robot-team-membership".format(input.group)
             }
             spec = {
@@ -162,7 +159,7 @@ teamWithRobot = lambda input: TeamWithRobotInput -> any {
         # Grant admin rights on group to team
         if input.createGroupAdminBinding:
             kubernetesv1alpha2.Object{
-                metadata: _metadata("teamAdminBinding") | {
+                metadata: utils._metadata("teamAdminBinding") | {
                     name = "{}-admin-binding".format(input.group)
                 }
                 spec = {

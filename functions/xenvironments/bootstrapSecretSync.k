@@ -10,6 +10,7 @@ Schemas:
 """
 
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
+import utils
 
 schema SecretRef:
     """
@@ -34,19 +35,6 @@ schema SecretSyncInput:
     destRef: SecretRef
     providerConfigName: str
 
-_metadata = lambda name: str -> any {
-    """
-    Creates metadata with a standardized composition resource name.
-
-    Args:
-        name: The name to include in the annotations
-
-    Returns:
-        A metadata object with annotations for composition resource naming
-    """
-    { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
-}
-
 syncedSecrets = lambda input: [SecretSyncInput] -> any {
     """
     Creates Crossplane Kubernetes provider objects to sync secrets from bootstrap to environments.
@@ -64,7 +52,7 @@ syncedSecrets = lambda input: [SecretSyncInput] -> any {
     [
         # Copy secret from bootstrap-ctp into destination-ctp
         kubernetesv1alpha2.Object {
-            metadata = _metadata("{}-{}-to-{}-{}-syncedSecret".format(
+            metadata = utils._metadata("{}-{}-to-{}-{}-syncedSecret".format(
                 secret.sourceRef.namespace, secret.sourceRef.name,
                 secret.destRef.namespace, secret.destRef.name))
             spec = {
