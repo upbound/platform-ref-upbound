@@ -9,13 +9,14 @@ spec:
       teams:
         solutions-non-prod-ci-team:
           permission: write
+    settings:
+      public: true
+      publish: true
     repositories:
-      configuration-aws-network:
-        public: true
-        publish: true
+      configuration-aws-network: {}
       configuration-aws-network_xnetwork:
-        public: true
-        publish: true
+        public: false
+        publish: false
     tokenSecretRef:
       name: solutions-non-prod-bootstrap-token
       namespace: default

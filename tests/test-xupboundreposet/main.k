@@ -116,8 +116,8 @@ _items = [
                         forProvider = {
                             name = "configuration-aws-network_xnetwork"
                             organizationName = "upboundcare"
-                            public = True
-                            publish = True
+                            public = False
+                            publish = False
                         }
                         managementPolicies = [
                             "*"

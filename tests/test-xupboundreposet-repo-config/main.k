@@ -106,6 +106,10 @@ _items = [
                 metadata.name = "test-xupboundreposet-repo-config"
                 spec.parameters: {
                     organization: "test-org"
+                    settings: {
+                        public: False
+                        publish: False
+                    }
                     permissions: {
                         teams: {
                             "test-team": {

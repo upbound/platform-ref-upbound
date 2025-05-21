@@ -37,8 +37,8 @@ _items = [
             forProvider = {
                 name = repo
                 organizationName = oxr.spec.parameters.organization
-                public = opts.public
-                publish = opts.publish
+                public = opts.public if opts.public != Undefined else oxr.spec.parameters.settings.public
+                publish = opts.publish if opts.publish != Undefined else oxr.spec.parameters.settings.publish
             }
             providerConfigRef = {
                 name = "{}-{}-reposet".format(oxr.metadata.name, oxr.spec.parameters.organization)

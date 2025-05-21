@@ -33,19 +33,26 @@ spec:
                           type: object
                         type: object
                     type: object
+                  settings:
+                    type: object
+                    properties:
+                      public:
+                        type: boolean
+                        default: false
+                      publish:
+                        type: boolean
+                        default: false
+                    required:
+                    - public
+                    - publish
                   repositories:
                     additionalProperties:
                       type: object
-                      required:
-                        - public
-                        - publish
                       properties:
                         public:
                           type: boolean
-                          default: false
                         publish:
                           type: boolean
-                          default: false
                     type: object
                   tokenSecretRef:
                     type: object
