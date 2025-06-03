@@ -16,7 +16,7 @@ This Upbound project enables declarative bootstrapping of Upbound Spaces environ
 
 ### This repository:
 - **Declarative Environment Management**: Defines your entire environment as code via `XEnvironment` and `XUpboundRepoSet` resources
-- **AWS Integration**: Automatically setups IAM roles, policies, and OIDC authentication
+- **AWS Integration**: Automatically sets up IAM roles, policies, and OIDC authentication
 - **Secret Management**: Securely transfers credentials between AWS and Upbound
 - **Bootstrap Secret Synchronization**: Copies secrets from bootstrap control plane to target environments
 - **Team & Robot Automation**: Creates teams, robots, and tokens for automated workflows
