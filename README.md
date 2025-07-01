@@ -1,10 +1,35 @@
-# platform-ref-upbound
+# Platform Reference Upbound 
+![IDP Hero](assets/platform-ref-upbound-hero.png)
+This Upbound project enables declarative bootstrapping of Upbound Spaces environments with Cloud Provider integration through a GitOps approach.
 
-This upbound project enables declarative bootstrapping of Upbound Spaces environments with Cloud Provider integration through a GitOps approach.
+# Table of Contents
+- [💡 Overview](#-overview)
+- [🛠 Prerequisites](#-prerequisites)
+- [💻 Getting Started](#-getting-started)
+- [🏗️ Architecture](#-architecture)
+- [🔧 Optional Component Configuration](#-optional-component-configuration)
+- [💜 XUpboundRepoSet](#-xupboundreposet)
+- [🐛 Development](#-development)
 
-## Overview
 
-### XEnvironment Resource
+## 💡 Overview
+
+### This repository:
+- **Declarative Environment Management**: Defines your entire environment as code via `XEnvironment` and `XUpboundRepoSet` resources
+- **AWS Integration**: Automatically sets up IAM roles, policies, and OIDC authentication
+- **Secret Management**: Securely transfers credentials between AWS and Upbound
+- **Bootstrap Secret Synchronization**: Copies secrets from bootstrap control plane to target environments
+- **Team & Robot Automation**: Creates teams, robots, and tokens for automated workflows
+- **Repository Management**: Creates and configures Upbound repositories with team permissions and robot access
+- **GitOps Ready**: Designed for continuous delivery workflows
+- **Optional Components**: Flexibility to enable/disable specific features as needed:
+  - AWS Provider Role with OIDC
+  - AWS Secrets Manager integration
+  - Upbound Team with Robot setup
+  - Bootstrap secret synchronization
+
+
+### What does `XEnvironment` Resource do?
 - Upbound Control Planes in Spaces
 - AWS IAM roles and permissions
 - Cross-service authentication with OIDC
@@ -13,38 +38,22 @@ This upbound project enables declarative bootstrapping of Upbound Spaces environ
 - Provider configurations for Kubernetes resources
 - Teams, robots, and robot tokens for automation
 
-### XUpboundRepoSet Resource
+### What does `XUpboundRepoSet` Resource do?
 - Upbound repositories creation and configuration
 - Team-based permission management for repositories
 - Consistent repository configuration across your organization
 
-## Features
 
-- **Declarative Environment Management**: Define your entire environment as code
-- **AWS Integration**: Automated setup of IAM roles, policies, and OIDC authentication
-- **Secret Management**: Secure transfer of credentials between AWS and Upbound
-- **Bootstrap Secret Synchronization**: Copy secrets from bootstrap control plane to target environments
-- **Team & Robot Automation**: Create teams, robots, and tokens for automated workflows
-- **Repository Management**: Create and configure Upbound repositories with team permissions and robot access
-- **GitOps Ready**: Designed for continuous delivery workflows
-- **Optional Components**: Flexibility to enable/disable specific features as needed:
-  - AWS Provider Role with OIDC
-  - AWS Secrets Manager integration
-  - Upbound Team with Robot setup
-  - Bootstrap secret synchronization
+## 🛠 Prerequisites
+* [An Upbound Account](https://www.upbound.io/register/a) with appropriate permissions
+*  Access to AWS account
+*  `kubectl` CLI installed and configured
+* [Upbound CLI (`up`)](https://docs.upbound.io/cli/)
 
-## Usage
 
-### Prerequisites
+## 💻 Getting Started
 
-- Upbound account with appropriate permissions
-- Access to AWS account
-- kubectl CLI installed and configured
-- Upbound CLI (`up`) installed
-
-### Installation
-
-1. Create a group and control plane on Upbound
+1. Create a Group and Control Plane on Upbound
 
    *This step establishes your Upbound organizational structure. The group organizes your control planes, and the control plane is where Crossplane will run to manage your infrastructure.*
 
@@ -88,7 +97,7 @@ up ctx "${UPBOUND_ORG}/${UPBOUND_SPACE}/${UPBOUND_GROUP}/${UPBOUND_CTP}"
 - Enter a name for your token and click "Create Token"
 - Copy the Token value (Access ID is not needed for this use case)
 
-3. Create kubernetes secrets for the token
+3. Create Kubernetes secrets for the token
 
    *This step stores your Upbound token securely in Kubernetes as a secret, allowing your resources to authenticate with Upbound.*
 
@@ -107,9 +116,9 @@ cat <<EOF | kubectl apply -f -
 EOF
 ```
 
-4. Create kubeconfig for provider-kubernetes
+4. Create `kubeconfig` for provider-kubernetes
 
-   *This creates a special kubeconfig that allows Crossplane's Kubernetes provider to interact with your control plane. It references the token created in the previous step.*
+   *This creates a special `kubeconfig` that allows Crossplane's Kubernetes provider to interact with your control plane. It references the token created in the previous step.*
 
 ```bash
 up ctx . -f - > kubeconfig.yaml
@@ -118,7 +127,7 @@ kubectl -n default create secret generic bootstrap-kubeconfig --from-file=kubeco
 
 5. Install the configuration:
 
-   *This installs the bootstrap configuration package into your control plane. The configuration contains the XEnvironment CRD and composition function that automate environment setup.*
+   *This installs the bootstrap configuration package into your control plane. The configuration contains the `XEnvironment` CRD and composition function that automate environment setup.*
 
 ```bash
 VERSION=""
@@ -135,7 +144,7 @@ EOF
 
 6. Create provider config for provider-kubernetes
 
-   *This configures the Kubernetes provider to use your kubeconfig and token from the earlier steps, enabling it to create resources in your control plane.*
+   *This configures the Kubernetes provider to use your `kubeconfig` and token from the earlier steps, enabling it to create resources in your control plane.*
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -169,7 +178,7 @@ SECRET_PATH=path/to/aws/credentials
 kubectl create secret generic "aws-creds" -n default --from-file=credentials="${SECRET_PATH}"
 ```
 
-8. Create an XEnvironment resource:
+8. Create an `XEnvironment` resource:
 
    *Finally, this creates the XEnvironment resource that ties everything together. This triggers the composition function to create all the necessary resources in both AWS and Upbound to establish your environment.*
 
@@ -214,11 +223,11 @@ cat <<EOF | kubectl apply -f -
 EOF
 ```
 
-## Architecture
+## 🏗️ Architecture
 
 ![Architecture Diagram](./assets/arch.svg)
 
-## Optional Component Configuration
+## 🔧 Optional Component Configuration
 
 ### AWS Components
 
@@ -267,7 +276,7 @@ These resources enable automation through GitOps and CI/CD pipelines, allowing p
 
 If you don't need team and robot resources, simply omit the `teamWithRobot` parameter from your XEnvironment specification.
 
-## XUpboundRepoSet
+## 💜 XUpboundRepoSet
 
 The `XUpboundRepoSet` custom resource allows you to manage Upbound repositories and their permissions declaratively.
 
@@ -296,15 +305,17 @@ spec:
 
 ### Parameters
 
-- **organization**: The Upbound organization name
-- **permissions.teams**: Map of team names to permission objects (with permission type: "read", "write", "admin")
-- **repositories**: Map of repository names to empty objects
-- **tokenSecretRef**: Reference to a Kubernetes secret containing the Upbound token
-  - **name**: Name of the secret
-  - **namespace**: Namespace for the secret (defaults to "default")
-  - **key**: Key in the secret (defaults to "token")
+| Parameter | Description |
+|-----------|-------------|
+| `organization` | The Upbound organization name |
+| `permissions.teams` | Map of team names to permission objects (with permission type: "read", "write", "admin") |
+| `repositories` | Map of repository names to empty objects |
+| `tokenSecretRef` | Reference to a Kubernetes secret containing the Upbound token |
+| `tokenSecretRef.name` | Name of the secret |
+| `tokenSecretRef.namespace` | Namespace for the secret (defaults to "default") |
+| `tokenSecretRef.key` | Key in the secret (defaults to "token") |
 
-## Development
+## 🐛 Development
 
 ### Testing
 
