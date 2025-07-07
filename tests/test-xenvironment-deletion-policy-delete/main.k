@@ -1,6 +1,5 @@
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
 import models.io.upbound.aws.iam.v1beta1 as iamv1beta1
-import models.io.upbound.aws.secretsmanager.v1beta1 as secretsmanagerv1beta1
 import models.io.upbound.dev.meta.v1alpha1 as metav1alpha1
 import models.io.upbound.sa.v1 as sav1
 
@@ -43,16 +42,6 @@ _items = [
                         forProvider.manifest = {}
                     }
                 }
-                kubernetesv1alpha2.Object{
-                    kind = "Object"
-                    metadata = {
-                        name = "solutions-non-prod-example-secrets-read-access-key"
-                    }
-                    spec = {
-                        deletionPolicy = "Delete"
-                        forProvider.manifest = {}
-                    }
-                }
                 ### AWS ###
                 iamv1beta1.Role{
                     metadata = {
@@ -72,58 +61,29 @@ _items = [
                         forProvider = {}
                     }
                 }
-                iamv1beta1.Policy{
+                sav1.XSharedAWSSecret{
                     metadata = {
-                        name = "upbound-solutions-non-prod-example-example-secrets-read"
+                        name = "example-shared-secret"
                     }
                     spec = {
-                        deletionPolicy = "Delete"
-                        forProvider = {}
-                    }
-                }
-                iamv1beta1.UserPolicyAttachment{
-                    metadata = {
-                        name = "upbound-solutions-non-prod-example-example-secrets-read"
-                    }
-                    spec = {
-                        deletionPolicy = "Delete"
-                        forProvider = {}
-                    }
-                }
-                iamv1beta1.AccessKey{
-                    metadata = {
-                        name = "upbound-solutions-non-prod-example-example-secrets-read"
-                    }
-                    spec = {
-                        deletionPolicy = "Delete"
-                        forProvider = {}
-                    }
-                }
-                iamv1beta1.User{
-                    metadata = {
-                        name = "upbound-solutions-non-prod-example-example-secrets-read"
-                    }
-                    spec = {
-                        deletionPolicy = "Delete"
-                        forProvider = {}
-                    }
-                }
-                kubernetesv1alpha2.Object{
-                    metadata = {
-                        name = "example-ses"
-                    }
-                    spec = {
-                        deletionPolicy = "Delete"
-                        forProvider.manifest = {}
-                    }
-                }
-                kubernetesv1alpha2.Object{
-                    metadata = {
-                        name = "example-sss"
-                    }
-                    spec = {
-                        deletionPolicy = "Delete"
-                        forProvider.manifest = {}
+                        parameters = {
+                            deletionPolicy = "Delete"
+                            aws = {
+                                accountId = "12345678912"
+                                region = "us-east-1"
+                                namePrefix = "upbound-solutions-non-prod-example-example"
+                                providerConfigRef = {
+                                    name = "solutions-non-prod-example"
+                                }
+                            }
+                            upbound = {
+                                group = "solutions-non-prod-example"
+                                controlPlane = "example"
+                                providerConfigRef = {
+                                    name = "solutions-non-prod-example-group"
+                                }
+                            }
+                        }
                     }
                 }
                 iamv1beta1.OpenIDConnectProvider{
@@ -133,15 +93,6 @@ _items = [
                     spec = {
                         deletionPolicy = "Delete"
                         forProvider = {}
-                    }
-                }
-                secretsmanagerv1beta1.Secret{
-                    metadata = {
-                        name = "upbound-solutions-non-prod-example-example-secretsmanager-secret"
-                    }
-                    spec = {
-                        deletionPolicy = "Delete"
-                        forProvider.region = "us-east-1"
                     }
                 }
             ]

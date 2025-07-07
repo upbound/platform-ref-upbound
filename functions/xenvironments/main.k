@@ -20,7 +20,6 @@ import regex
 
 # our modules
 import aws.providerConfig as awsProviderConfig
-import aws.secretStore as awsSS
 import aws.crossplaneRole as awsXPRole
 import pKubernetesHelper
 import teamRobot
@@ -323,16 +322,89 @@ if _initReady:
 
         # if creation of shared secret is enabled
         if oxrSpec.parameters.aws.sharedSecret != Undefined:
-            _awsItems += awsSS.getSecretStoreItems(awsSS.AWSSecretStoreInput{
-                accountId = oxrSpec.parameters.aws.accountId
-                deletionPolicy = oxrSpec.parameters.deletionPolicy
-                ctpName = oxrMeta.name
-                envName = envGroupName
-                namePrefix = "{}-{}-{}".format(_oxrStatusUpbound.org, envGroupName, oxrMeta.name)
-                region = oxrSpec.parameters.aws.region
-                rootCtp = _oxrStatusUpbound.bootstrapCtp
-                secretsManagerSecretArn: oxrSpec.parameters.aws?.sharedSecret?.secretsManagerSecretArn
-            })
+            _awsItems += [sav1.XSharedAWSSecret{
+                metadata = utils._metadata("sharedAWSSecret") | {
+                    name = "{}-shared-secret".format(oxrMeta.name)
+                }
+                spec = {
+                    parameters = {
+                        deletionPolicy = oxrSpec.parameters.deletionPolicy
+                        aws = {
+                            accountId = oxrSpec.parameters.aws.accountId
+                            region = oxrSpec.parameters.aws.region
+                            namePrefix = "{}-{}-{}".format(_oxrStatusUpbound.org, envGroupName, oxrMeta.name)
+                            if oxrSpec.parameters.aws?.sharedSecret?.secretsManagerSecret:
+                                secretsManagerSecret = {
+                                    if oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret?.arn:
+                                        arn = oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret.arn
+                                    if oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret?.name:
+                                        name = oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret.name
+                                    if oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret?.create != Undefined:
+                                        create = oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret.create
+                                }
+                            providerConfigRef = {
+                                name = envGroupName
+                            }
+                        }
+                        upbound = {
+                            group = envGroupName
+                            controlPlane = oxrMeta.name
+                            providerConfigRef = {
+                                name = "{}-group".format(envGroupName)
+                            }
+                        }
+                        if oxrSpec.parameters.aws?.sharedSecret:
+                            externalSecret = {
+                                if oxrSpec.parameters.aws.sharedSecret.externalSecret?.name:
+                                    name = oxrSpec.parameters.aws.sharedSecret.externalSecret.name
+                                if oxrSpec.parameters.aws.sharedSecret.externalSecret?.namespace:
+                                    namespace = oxrSpec.parameters.aws.sharedSecret.externalSecret.namespace
+                                if oxrSpec.parameters.aws.sharedSecret.externalSecret?.spec:
+                                    spec = {
+                                        if oxrSpec.parameters.aws.sharedSecret.externalSecret.spec?.data:
+                                            data = [{
+                                                secretKey = item.secretKey
+                                                remoteRef = {
+                                                    key = item.remoteRef.key
+                                                    if item.remoteRef?.property:
+                                                        property = item.remoteRef.property
+                                                    if item.remoteRef?.version:
+                                                        version = item.remoteRef.version
+                                                    if item.remoteRef?.metadataPolicy:
+                                                        metadataPolicy = item.remoteRef.metadataPolicy
+                                                    if item.remoteRef?.conversionStrategy:
+                                                        conversionStrategy = item.remoteRef.conversionStrategy
+                                                    if item.remoteRef?.decodingStrategy:
+                                                        decodingStrategy = item.remoteRef.decodingStrategy
+                                                }
+                                                if item?.sourceRef:
+                                                    sourceRef = {
+                                                        if item.sourceRef?.generatorRef:
+                                                            generatorRef = {
+                                                                apiVersion = item.sourceRef.generatorRef.apiVersion
+                                                                kind = item.sourceRef.generatorRef.kind
+                                                                name = item.sourceRef.generatorRef.name
+                                                            }
+                                                    }
+                                            } for item in oxrSpec.parameters.aws.sharedSecret.externalSecret.spec.data]
+                                        if oxrSpec.parameters.aws.sharedSecret.externalSecret.spec?.target:
+                                            target = {
+                                                if oxrSpec.parameters.aws.sharedSecret.externalSecret.spec.target?.template:
+                                                    template = {
+                                                        if oxrSpec.parameters.aws.sharedSecret.externalSecret.spec.target.template?.data:
+                                                            data = oxrSpec.parameters.aws.sharedSecret.externalSecret.spec.target.template.data
+                                                        if oxrSpec.parameters.aws.sharedSecret.externalSecret.spec.target.template?.metadata:
+                                                            metadata = {
+                                                                if oxrSpec.parameters.aws.sharedSecret.externalSecret.spec.target.template.metadata?.labels:
+                                                                    labels = oxrSpec.parameters.aws.sharedSecret.externalSecret.spec.target.template.metadata.labels
+                                                            }
+                                                    }
+                                            }
+                                    }
+                            }
+                    }
+                }
+            }]
 
 # Return final resource list
 items = _initItems + _upboundItems + _awsItems

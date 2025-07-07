@@ -1,0 +1,53 @@
+apiVersion: sa.upbound.io/v1
+kind: XSharedAWSSecret
+metadata:
+  name: example-shared-secret-with-data
+spec:
+  parameters:
+    deletionPolicy: Orphan
+    aws:
+      accountId: "123456789012"
+      region: us-east-1
+      secretsManagerSecret:
+        arn: "arn:aws:secretsmanager:us-east-1:123456789012:secret:example-config-AbCdEf"
+        name: "example-config"
+        create: true
+      namePrefix: example-env
+      providerConfigRef:
+        name: example-env
+    upbound:
+      group: example-env
+      controlPlane: example-ctp
+      providerConfigRef:
+        name: example-env-group
+    externalSecret:
+      name: custom-external-secret
+      namespace: my-namespace
+      spec:
+        data:
+          - secretKey: githubAppPrivateKey
+            remoteRef:
+              key: example-config
+              property: githubAppPrivateKey
+          - secretKey: githubCreds
+            remoteRef:
+              key: example-config
+              property: githubCreds
+          - secretKey: databaseUrl
+            remoteRef:
+              key: example-config
+              property: databaseUrl
+              decodingStrategy: Base64
+        target:
+          template:
+            metadata:
+              labels:
+                app: my-app
+                environment: production
+                argocd.argoproj.io/secret-type: repo-creds
+            data:
+              githubAppID: '{{ $creds := .githubCreds | fromJson }}{{ index $creds.app_auth 0 "id" }}'
+              githubInstallationID: '{{ $creds := .githubCreds | fromJson }}{{ index $creds.app_auth 0 "installation_id" }}'
+              githubPrivateKey: '{{ $creds := .githubCreds | fromJson }}{{ index $creds.app_auth 0 "pem_file" | replace "\\n" "\n" }}'
+              url: '{{ $creds := .githubCreds | fromJson }}https://github.com/{{ $creds.owner }}'
+              type: "git"

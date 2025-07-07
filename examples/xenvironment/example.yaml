@@ -21,8 +21,20 @@ spec:
         # Optional: ARN of an existing OIDC provider (if you don't want to create a new one)
         # oidcProviderArn: "arn:aws:iam::12345678912:oidc-provider/proidc.upbound.io"
       sharedSecret: {}
-        # Optional: ARN of an existing Secrets Manager secret (if you don't want to create a new one)
-        # secretsManagerSecretArn: "arn:aws:secretsmanager:us-east-1:12345678912:secret:example-config-abcde"
+        # Optional: Configure Secrets Manager secret
+        # secretsManagerSecret:
+        #   arn: "arn:aws:secretsmanager:us-east-1:12345678912:secret:example-config-abcde"  # Import existing secret for management
+        #   name: "custom-secret-name"  # Custom name (for new secrets or reference to existing unmanaged secrets)
+        #   create: false  # Set to false to skip creation/management
+        # externalSecret:
+        #   namespace: my-namespace  # Optional: Namespace for the target secret (defaults to 'default')
+        #   spec:
+        #     target:
+        #       template:
+        #         metadata:
+        #           labels:  # Optional: Labels for the target secret
+        #             app: my-application
+        #             environment: staging
     upbound:
       initKubeconfigSecretRef:
         name: init-kubeconfig
