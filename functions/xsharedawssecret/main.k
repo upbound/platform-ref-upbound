@@ -1,8 +1,8 @@
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
 import models.io.upbound.aws.iam.v1beta1 as iamv1beta1
 import models.io.upbound.aws.secretsmanager.v1beta1 as secretsmanagerv1beta1
+import models.io.k8s.api.core.v1 as v1
 import spaces.v1alpha1 as spacesv1alpha1
-import kube.api.core.v1 as v1
 
 import json
 

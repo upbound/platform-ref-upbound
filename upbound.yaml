@@ -3,16 +3,30 @@ kind: Project
 metadata:
   name: platform-ref-upbound
 spec:
+  apiDependencies:
+  - k8s:
+      version: v1.33.0
+    type: k8s
   dependsOn:
-  - function: xpkg.upbound.io/crossplane-contrib/function-auto-ready
+  - apiVersion: pkg.crossplane.io/v1
+    kind: Function
+    package: xpkg.upbound.io/crossplane-contrib/function-auto-ready
     version: '>=v0.0.0'
-  - provider: xpkg.upbound.io/upbound/provider-aws-iam
+  - apiVersion: pkg.crossplane.io/v1
+    kind: Provider
+    package: xpkg.upbound.io/upbound/provider-aws-iam
     version: v1
-  - provider: xpkg.upbound.io/upbound/provider-aws-secretsmanager
+  - apiVersion: pkg.crossplane.io/v1
+    kind: Provider
+    package: xpkg.upbound.io/upbound/provider-aws-secretsmanager
     version: v1
-  - provider: xpkg.upbound.io/upbound/provider-kubernetes
+  - apiVersion: pkg.crossplane.io/v1
+    kind: Provider
+    package: xpkg.upbound.io/upbound/provider-kubernetes
     version: v0
-  - provider: xpkg.upbound.io/upbound/provider-upbound
+  - apiVersion: pkg.crossplane.io/v1
+    kind: Provider
+    package: xpkg.upbound.io/upbound/provider-upbound
     version: v0.9.1
   description: |
     platform-ref-upbound enables declarative bootstrapping of Upbound Spaces
@@ -24,9 +38,3 @@ spec:
     environments with Cloud Provider integration through a GitOps approach.
   repository: xpkg.upbound.io/upbound/platform-ref-upbound
   source: github.com/upbound/platform-ref-upbound
-  imageConfig:
-  - matchImages:
-    - type: Prefix
-      prefix: xpkg.upbound.io/upbound/kcl:v0.10.6
-    rewriteImage:
-      prefix: docker.io/kcllang/kcl:v0.11.2

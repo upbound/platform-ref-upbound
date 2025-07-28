@@ -1,5 +1,5 @@
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
-import kube.api.core.v1 as v1
+import models.io.k8s.api.core.v1 as v1
 import utils
 import json
 
