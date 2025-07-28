@@ -24,3 +24,9 @@ spec:
     environments with Cloud Provider integration through a GitOps approach.
   repository: xpkg.upbound.io/upbound/platform-ref-upbound
   source: github.com/upbound/platform-ref-upbound
+  imageConfig:
+  - matchImages:
+    - type: Prefix
+      prefix: xpkg.upbound.io/upbound/kcl:v0.10.6
+    rewriteImage:
+      prefix: docker.io/kcllang/kcl:v0.11.2

@@ -8,6 +8,7 @@ This Upbound project enables declarative bootstrapping of Upbound Spaces environ
 - [💻 Getting Started](#-getting-started)
 - [🏗️ Architecture](#-architecture)
 - [🔧 Optional Component Configuration](#-optional-component-configuration)
+- [🔐 XSharedAWSSecret](#-xsharedawssecret)
 - [💜 XUpboundRepoSet](#-xupboundreposet)
 - [🐛 Development](#-development)
 
@@ -15,9 +16,9 @@ This Upbound project enables declarative bootstrapping of Upbound Spaces environ
 ## 💡 Overview
 
 ### This repository:
-- **Declarative Environment Management**: Defines your entire environment as code via `XEnvironment` and `XUpboundRepoSet` resources
+- **Declarative Environment Management**: Defines your entire environment as code via `XEnvironment`, `XSharedAWSSecret`, and `XUpboundRepoSet` resources
 - **AWS Integration**: Automatically sets up IAM roles, policies, and OIDC authentication
-- **Secret Management**: Securely transfers credentials between AWS and Upbound
+- **Secret Management**: Securely transfers credentials between AWS and Upbound via dedicated `XSharedAWSSecret` composition
 - **Bootstrap Secret Synchronization**: Copies secrets from bootstrap control plane to target environments
 - **Team & Robot Automation**: Creates teams, robots, and tokens for automated workflows
 - **Repository Management**: Creates and configures Upbound repositories with team permissions and robot access
@@ -204,7 +205,8 @@ cat <<EOF | kubectl apply -f -
         providerRole: {}
           # oidcProviderArn: "arn:aws:iam::your_accountid:oidc-provider/proidc.upbound.io"
         sharedSecret: {}
-          # secretsManagerSecretArn: "arn:aws:secretsmanager:region:your_accountid:secret:example-config-abcde"
+          # secretsManagerSecret:
+              # arn: "arn:aws:secretsmanager:region:your_accountid:secret:example-config-abcde"
       upbound:
         initKubeconfigSecretRef:
           name: bootstrap-kubeconfig
@@ -243,7 +245,21 @@ When the `providerRole` parameter is specified:
 
 When the `sharedSecret` parameter is specified:
 - If specified as an empty object (`sharedSecret: {}`), a new AWS Secrets Manager secret will be created
-- To use an existing secret, specify its ARN: `sharedSecret: { secretsManagerSecretArn: "arn:aws:..." }`
+- To use an existing secret, specify its ARN: `sharedSecret: { arn: "arn:aws:..." }`
+- To add labels to the target secret: `sharedSecret: { externalSecret: { spec: { target: { template: { metadata: { labels: { app: "my-app", environment: "prod" } } } } } } }`
+- To control the target namespace: `sharedSecret: { externalSecret: { namespace: "my-namespace" } }`
+
+#### ArgoCD Integration
+
+XEnvironment automatically creates ArgoCD cluster secrets for GitOps deployments. Set `createArgoSecret: false` to disable (default: `true`).
+
+**Generated Secret:**
+- **Location**: `argocd` namespace  
+- **Name**: `{group}-{controlplane}`
+- **Authentication**: Uses Upbound CLI (`up org token`) with your access token
+- **Server**: Points to your control plane's Kubernetes API endpoint
+
+This enables ArgoCD to authenticate and manage applications across your Upbound Spaces control planes.
 
 ### Upbound Components
 
@@ -275,6 +291,108 @@ When the `teamWithRobot` parameter is specified (even as an empty object), the b
 These resources enable automation through GitOps and CI/CD pipelines, allowing programmatic interaction with control planes. The team structure ensures proper access control and permission management for your environment.
 
 If you don't need team and robot resources, simply omit the `teamWithRobot` parameter from your XEnvironment specification.
+
+## 🔐 XSharedAWSSecret
+
+The `XSharedAWSSecret` custom resource provides a dedicated composition for managing AWS Secrets Manager integration with Upbound Spaces.
+
+### Usage
+
+The `XSharedAWSSecret` is automatically created by `XEnvironment` when the `sharedSecret` parameter is specified, but can also be used as a standalone resource:
+
+```yaml
+apiVersion: sa.upbound.io/v1
+kind: XEnvironment
+metadata:
+  name: example
+spec:
+  parameters:
+    aws:
+      sharedSecret: {}  # Creates XSharedAWSSecret automatically
+      # or specify existing secret ARN:
+      # sharedSecret:
+      #   arn: "arn:aws:secretsmanager:region:account:secret:name"
+```
+
+### Standalone Usage
+
+```yaml
+apiVersion: sa.upbound.io/v1
+kind: XSharedAWSSecret
+metadata:
+  name: example-shared-secret
+spec:
+  parameters:
+    deletionPolicy: Orphan
+    aws:
+      accountId: "123456789012"
+      region: us-east-1
+      secretsManagerSecret:
+        arn: "arn:aws:secretsmanager:us-east-1:123456789012:secret:example-config-AbCdEf"
+        name: "custom-secret-name"  # Optional: overrides namePrefix logic
+        create: false              # Optional: skip creation for existing secrets
+      namePrefix: example-env
+      providerConfigRef:
+        name: example-env
+    upbound:
+      group: example-env           # Renamed from groupName
+      controlPlane: example-ctp    # Renamed from controlPlaneName
+      providerConfigRef:
+        name: example-env-group
+    externalSecret:
+      name: custom-external-secret # Optional: Name for the SharedExternalSecret (defaults to control plane name)
+      namespace: my-namespace      # Optional: Namespace for the target secret
+      spec:
+        # Optional: Specify individual secret keys to extract (takes precedence over bulk extraction)
+        data:
+          - secretKey: githubAppPrivateKey
+            remoteRef:
+              key: example-config
+              property: githubAppPrivateKey
+          - secretKey: databaseUrl
+            remoteRef:
+              key: example-config
+              property: databaseUrl
+              decodingStrategy: Base64
+        target:
+          template:
+            metadata:
+              labels:              # Optional: Labels for the target secret
+                app: my-application
+                environment: production
+            data:                  # Optional: Template data with expressions for the target secret
+              githubAppID: '{{ $creds := .githubCreds | fromJson }}{{ index $creds.app_auth 0 "id" }}'
+              url: '{{ $creds := .githubCreds | fromJson }}https://github.com/{{ $creds.owner }}'
+              type: "git"
+```
+
+### Key Features
+
+- **Custom Secret Names**: Use `secretsManagerSecret.name` to override the default `namePrefix-config` naming pattern
+- **Skip Creation**: Set `secretsManagerSecret.create: false` to use existing AWS secrets without creating new ones
+- **IAM Name Truncation**: Automatically handles AWS IAM's 64-character limit by intelligently truncating names while preserving meaningful prefixes
+- **Updated Parameter Names**: Uses `group` and `controlPlane` instead of `groupName` and `controlPlaneName`
+- **Secret Labels**: Add custom labels to the target secret created by SharedExternalSecret using `externalSecret.spec.target.template.metadata.labels`
+- **Secret Namespace**: Control the namespace where the target secret is deployed using `externalSecret.namespace`
+- **Granular Secret Data**: Use `externalSecret.spec.data` for individual key-value extraction with property-specific settings (takes precedence over bulk extraction)
+- **Template Data**: Use `externalSecret.spec.target.template.data` to add templated data transformations with External Secrets templating expressions
+
+### What XSharedAWSSecret creates:
+- IAM user with read permissions for Secrets Manager
+- IAM policy with appropriate permissions (auto-truncated names for long secrets)
+- AWS Secrets Manager secret (conditionally created based on `create` parameter)
+- SharedSecretStore for External Secrets Operator
+- SharedExternalSecret for syncing secrets to control planes
+- Kubernetes secrets for IAM credentials
+
+### IAM Resource Naming
+
+When secret names are very long, IAM resource names are automatically truncated to stay within AWS's 64-character limit. The truncation preserves as much of the meaningful prefix as possible and appends a hash for uniqueness:
+
+```
+Original: very-long-secret-name-that-exceeds-sixty-four-characters-secrets-read
+Truncated: very-long-secret-name-that-exceeds-12345678-secrets-read
+```
 
 ## 💜 XUpboundRepoSet
 
@@ -324,6 +442,7 @@ The repository includes multiple test configurations:
 - Basic functionality tests: `tests/test-xenvironment/`
 - Deletion policy tests: `tests/test-xenvironment-deletion-policy-delete/`
 - No cloud provider resources: `tests/test-xenvironment-no-cloudprovider-resource/`
+- XSharedAWSSecret tests: `tests/test-xsharedawssecret/`
 
 To run tests:
 

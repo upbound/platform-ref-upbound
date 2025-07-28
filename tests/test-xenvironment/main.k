@@ -1,9 +1,9 @@
 import models.io.crossplane.kubernetes.v1alpha1 as kubernetesv1alpha1
 import models.io.crossplane.kubernetes.v1alpha2 as kubernetesv1alpha2
 import models.io.upbound.aws.iam.v1beta1 as iamv1beta1
-import models.io.upbound.aws.secretsmanager.v1beta1 as secretsmanagerv1beta1
 import models.io.upbound.aws.v1beta1 as awsv1beta1
 import models.io.upbound.dev.meta.v1alpha1 as metav1alpha1
+import models.io.upbound.sa.v1 as sav1
 import json
 import base64
 
@@ -98,32 +98,6 @@ _items = [
                         watch = False
                     }
                 }
-                kubernetesv1alpha2.Object{
-                    kind = "Object"
-                    metadata = {
-                        name = "solutions-non-prod-example-secrets-read-access-key"
-                    }
-                    spec = {
-                        deletionPolicy = "Orphan"
-                        forProvider = {
-                            manifest = {
-                                apiVersion = "v1"
-                                kind = "Secret"
-                                metadata = {
-                                    name = "solutions-non-prod-example-secrets-read-access-key"
-                                    namespace = "solutions-non-prod-example"
-                                }
-                            }
-                        }
-                        managementPolicies = [
-                            "*"
-                        ]
-                        providerConfigRef = {
-                            name = "solutions-non-prod-example-group"
-                        }
-                        watch = False
-                    }
-                }
                 kubernetesv1alpha1.ProviderConfig{
                     metadata = {
                         name = "example-ctp"
@@ -203,202 +177,29 @@ _items = [
                         }
                     }
                 }
-                iamv1beta1.Policy{
-                    metadata: {
-                        name: "upbound-solutions-non-prod-example-example-secrets-read"
-                    }
-                    spec: {
-                        deletionPolicy: "Orphan"
-                        managementPolicies: ["*"]
-                        forProvider: {
-                            policy: """{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "secretsmanager:GetSecretValue",
-                "secretsmanager:DescribeSecret",
-                "secretsmanager:ListSecretVersionIds"
-            ],
-            "Resource": [
-                "arn:aws:secretsmanager:us-east-1:12345678912:secret:upbound-solutions-non-prod-example-example-*"
-            ]
-        }
-    ]
-}"""
-                        }
-                        providerConfigRef: {
-                            name: "solutions-non-prod-example"
-                        }
-                    }
-                }
-                iamv1beta1.UserPolicyAttachment{
-                    metadata: {
-                        name: "upbound-solutions-non-prod-example-example-secrets-read"
-                    }
-                    spec: {
-                        deletionPolicy: "Orphan"
-                        managementPolicies: ["*"]
-                        forProvider: {
-                            policyArnSelector: {
-                              matchControllerRef: True
-                            }
-                            userSelector: {
-                              matchControllerRef: True
-                            }
-                        }
-                        providerConfigRef: {
-                            name: "solutions-non-prod-example"
-                        }
-                    }
-                }
-                iamv1beta1.AccessKey{
-                    metadata: {
-                        name: "upbound-solutions-non-prod-example-example-secrets-read"
-                    }
-                    spec: {
-                        deletionPolicy: "Orphan"
-                        managementPolicies: ["*"]
-                        forProvider: {
-                            userSelector: {
-                                matchControllerRef: True
-                            }
-                        }
-                        providerConfigRef: {
-                            name: "solutions-non-prod-example"
-                        }
-                        writeConnectionSecretToRef: {
-                            name: "solutions-non-prod-example-secrets-read-access-key"
-                            namespace: "default"
-                        }
-                    }
-                }
-                iamv1beta1.User{
-                    metadata: {
-                        name: "upbound-solutions-non-prod-example-example-secrets-read"
-                    }
-                    spec: {
-                    deletionPolicy: "Orphan"
-                        managementPolicies: ["*"]
-                        forProvider: {}
-                        providerConfigRef: {
-                            name: "solutions-non-prod-example"
-                        }
-                    }
-                }
-                kubernetesv1alpha2.Object{
+                sav1.XSharedAWSSecret{
                     metadata = {
-                        name = "example-ses"
+                        name = "example-shared-secret"
                     }
                     spec = {
-                        deletionPolicy = "Orphan"
-                        forProvider = {
-                            manifest = {
-                                apiVersion = "spaces.upbound.io/v1alpha1"
-                                kind = "SharedExternalSecret"
-                                metadata = {
-                                    name = "example"
-                                    namespace = "solutions-non-prod-example"
+                        parameters = {
+                            deletionPolicy = "Orphan"
+                            aws = {
+                                accountId = "12345678912"
+                                region = "us-east-1"
+                                namePrefix = "upbound-solutions-non-prod-example-example"
+                                providerConfigRef = {
+                                    name = "solutions-non-prod-example"
                                 }
-                                spec = {
-                                    controlPlaneSelector = {
-                                        names = [
-                                            "example"
-                                        ]
-                                    }
-                                    externalSecretSpec = {
-                                        dataFrom = [
-                                            {
-                                                extract = {
-                                                    conversionStrategy = "Default"
-                                                    decodingStrategy = "None"
-                                                    key = "upbound-solutions-non-prod-example-example-config"
-                                                    metadataPolicy = "None"
-                                                }
-                                            }
-                                        ]
-                                        refreshInterval = "1m"
-                                        secretStoreRef = {
-                                            kind = "ClusterSecretStore"
-                                            name = "example"
-                                        }
-                                        target = {
-                                            creationPolicy = "Owner"
-                                            deletionPolicy = "Retain"
-                                            name = "example"
-                                        }
-                                    }
-                                    namespaceSelector = {
-                                        names = [
-                                            "default"
-                                        ]
-                                    }
+                            }
+                            upbound = {
+                                group = "solutions-non-prod-example"
+                                controlPlane = "example"
+                                providerConfigRef = {
+                                    name = "solutions-non-prod-example-group"
                                 }
                             }
                         }
-                        managementPolicies = [
-                            "*"
-                        ]
-                        providerConfigRef = {
-                            name = "solutions-non-prod-example-group"
-                        }
-                        watch = False
-                    }
-                }
-                kubernetesv1alpha2.Object{
-                    metadata = {
-                        name = "example-sss"
-                    }
-                    spec = {
-                        deletionPolicy = "Orphan"
-                        forProvider = {
-                            manifest = {
-                                apiVersion = "spaces.upbound.io/v1alpha1"
-                                kind = "SharedSecretStore"
-                                metadata = {
-                                    name = "example"
-                                    namespace = "solutions-non-prod-example"
-                                }
-                                spec = {
-                                    controlPlaneSelector = {
-                                        names = [
-                                            "example"
-                                        ]
-                                    }
-                                    namespaceSelector = {
-                                        names = [
-                                            "default"
-                                        ]
-                                    }
-                                    provider = {
-                                        aws = {
-                                            auth = {
-                                                secretRef = {
-                                                    accessKeyIDSecretRef = {
-                                                        key = "username"
-                                                        name = "solutions-non-prod-example-secrets-read-access-key"
-                                                    }
-                                                    secretAccessKeySecretRef = {
-                                                        key = "password"
-                                                        name = "solutions-non-prod-example-secrets-read-access-key"
-                                                    }
-                                                }
-                                            }
-                                            region = "us-east-1"
-                                            service = "SecretsManager"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        managementPolicies = [
-                            "*"
-                        ]
-                        providerConfigRef = {
-                            name = "solutions-non-prod-example-group"
-                        }
-                        watch = False
                     }
                 }
                 awsv1beta1.ProviderConfig{
@@ -458,24 +259,6 @@ _items = [
                                 "sts.amazonaws.com"
                             ]
                             url = "https://proidc.upbound.io"
-                        }
-                        managementPolicies = [
-                            "*"
-                        ]
-                        providerConfigRef = {
-                            name = "solutions-non-prod-example"
-                        }
-                    }
-                }
-                secretsmanagerv1beta1.Secret{
-                    metadata = {
-                        name = "upbound-solutions-non-prod-example-example-secretsmanager-secret"
-                    }
-                    spec = {
-                        deletionPolicy = "Orphan"
-                        forProvider = {
-                            name = "upbound-solutions-non-prod-example-example-config"
-                            region = "us-east-1"
                         }
                         managementPolicies = [
                             "*"

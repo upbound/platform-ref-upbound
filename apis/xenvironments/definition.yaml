@@ -58,9 +58,100 @@ spec:
                         type: object
                         description: Settings for configuring the shared secret
                         properties:
-                          secretsManagerSecretArn:
-                            description: ARN of an existing AWS Secrets Manager secret to use instead of creating a new one.
-                            type: string
+                          secretsManagerSecret:
+                            properties:
+                              arn:
+                                description: ARN of an existing AWS Secrets Manager secret to use instead of creating a new one.
+                                type: string
+                              name:
+                                description: Name of the AWS Secrets Manager secret. If provided, overrides the namePrefix logic for the secret name.
+                                type: string
+                              create:
+                                description: Whether to create the AWS Secrets Manager secret. Defaults to true. Set to false to skip creation when using an existing secret.
+                                type: boolean
+                                default: true
+                            type: object
+                          externalSecret:
+                            properties:
+                              name:
+                                description: Name for the SharedExternalSecret. If not provided, defaults to control plane name.
+                                type: string
+                              namespace:
+                                description: Namespace where the target secret will be created. Defaults to 'default'.
+                                type: string
+                                default: default
+                              spec:
+                                properties:
+                                  data:
+                                    description: Data specifies how to fetch individual secret values from the external provider.
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        secretKey:
+                                          description: The key in the Kubernetes Secret to store the value.
+                                          type: string
+                                        remoteRef:
+                                          description: Reference to the remote secret in the external provider.
+                                          type: object
+                                          properties:
+                                            key:
+                                              description: Key used in the Provider, mandatory.
+                                              type: string
+                                            property:
+                                              description: Used to select a specific property of the Provider value.
+                                              type: string
+                                            version:
+                                              description: Used to select a specific version of the Provider value.
+                                              type: string
+                                            metadataPolicy:
+                                              description: Policy for fetching metadata.
+                                              type: string
+                                              enum: ["Fetch", "None"]
+                                            conversionStrategy:
+                                              description: Strategy for converting the secret value.
+                                              type: string
+                                              enum: ["Default", "Unicode"]
+                                            decodingStrategy:
+                                              description: Strategy for decoding the secret value.
+                                              type: string
+                                              enum: ["None", "Base64", "Base64URL", "Auto"]
+                                          required: ["key"]
+                                        sourceRef:
+                                          description: Override secret source.
+                                          type: object
+                                          properties:
+                                            generatorRef:
+                                              type: object
+                                              properties:
+                                                apiVersion:
+                                                  type: string
+                                                kind:
+                                                  type: string
+                                                name:
+                                                  type: string
+                                      required: ["secretKey", "remoteRef"]
+                                  target:
+                                    properties:
+                                      template:
+                                        properties:
+                                          data:
+                                            description: Data to add to the target secret template with optional templating expressions.
+                                            type: object
+                                            additionalProperties:
+                                              type: string
+                                          metadata:
+                                            properties:
+                                              labels:
+                                                description: Labels to add to the target secret created by the SharedExternalSecret.
+                                                type: object
+                                                additionalProperties:
+                                                  type: string
+                                            type: object
+                                        type: object
+                                    type: object
+                                type: object
+                            type: object
                       providerRole:
                         type: object
                         description: Settings for the provider-aws role with trust to environment control plane

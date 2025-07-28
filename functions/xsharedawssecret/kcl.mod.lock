@@ -1,0 +1,12 @@
+[dependencies]
+  [dependencies.models]
+    name = "models"
+    full_name = "models_0.0.1"
+    version = "0.0.1"
+  [dependencies.spaces]
+    name = "spaces"
+    full_name = "spaces_1.12.0"
+    version = "1.12.0"
+    reg = "xpkg.upbound.io"
+    repo = "upbound/kcl-modules_spaces"
+    oci_tag = "1.12.0"

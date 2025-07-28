@@ -1,0 +1,20 @@
+apiVersion: sa.upbound.io/v1
+kind: XSharedAWSSecret
+metadata:
+  name: example-shared-secret
+spec:
+  parameters:
+    deletionPolicy: Orphan
+    aws:
+      accountId: "123456789012"
+      region: us-east-1
+      secretsManagerSecret:
+        arn: "arn:aws:secretsmanager:us-east-1:123456789012:secret:example-env-config-AbCdEf"
+      namePrefix: example-env
+      providerConfigRef:
+        name: example-env
+    upbound:
+      group: example-env
+      controlPlane: example-ctp
+      providerConfigRef:
+        name: example-env-group
