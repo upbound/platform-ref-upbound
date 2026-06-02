@@ -271,7 +271,7 @@ _items = [
             compositionPath: "apis/xenvironments/composition.yaml"
             xrPath: "examples/xenvironment/example-no-cloudprovider-resources.yaml"
             xrdPath: "apis/xenvironments/definition.yaml"
-            context: []
+            context: {}
             extraResources: [
                 sav1.XEnvironment{
                     metadata = {

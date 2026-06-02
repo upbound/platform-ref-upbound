@@ -207,7 +207,6 @@ _items = [
                         annotations = {
                             "crossplane.io/composition-resource-name" = "solutions-non-prod-example"
                         }
-                        generateName = "example-"
                         labels = {
                             "crossplane.io/composite" = "example"
                         }
