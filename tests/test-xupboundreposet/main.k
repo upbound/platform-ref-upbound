@@ -21,7 +21,6 @@ _items = [
                         annotations = {
                             "crossplane.io/composition-resource-name" = "providerConfigUpbound"
                         }
-                        generateName = "example-"
                         labels = {
                             "crossplane.io/composite" = "example"
                         }
