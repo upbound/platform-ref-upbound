@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Checkout
         id: checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Install and login with up
         if: env.UP_API_TOKEN != '' && env.UP_ORG != ''
@@ -32,7 +32,7 @@ jobs:
 
       # doesn't work with plain token when pushing otherwise
       - name: Login to xpkg with robot
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
         with:
           registry: xpkg.upbound.io
           username: ${{ env.UP_ROBOT_ID }}
