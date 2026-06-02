@@ -99,7 +99,7 @@ _items = [
             compositionPath = "apis/xenvironments/composition.yaml"
             xrPath = "examples/xenvironment/example-deletion-policy-delete.yaml"
             xrdPath = "apis/xenvironments/definition.yaml"
-            context = []
+            context = {}
             extraResources = []
             observedResources = [
                 kubernetesv1alpha2.Object{
