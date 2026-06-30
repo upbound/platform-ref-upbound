@@ -1,7 +1,7 @@
 [dependencies]
   [dependencies.kube]
     name = "kube"
-    full_name = "kube_1.31.2"
+    full_name = "kcl-modules_kube_1.31.2"
     version = "1.31.2"
     reg = "xpkg.upbound.io"
     repo = "upbound/kcl-modules_kube"

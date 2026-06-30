@@ -1,0 +1,109 @@
+items:
+- apiVersion: meta.dev.upbound.io/v1alpha1
+  kind: CompositionTest
+  metadata:
+    name: test-xupboundreposet-repo-config
+  spec:
+    assertResources:
+    - apiVersion: repository.upbound.io/v1alpha1
+      kind: Repository
+      metadata:
+        annotations:
+          crosslane.io/external-name: test1
+          crossplane.io/composition-resource-name: test-org-test1
+      spec:
+        deletionPolicy: Orphan
+        forProvider:
+          name: test1
+          organizationName: test-org
+          public: true
+          publish: false
+        managementPolicies:
+        - '*'
+        providerConfigRef:
+          name: test-xupboundreposet-repo-config-test-org-reposet
+    - apiVersion: repository.upbound.io/v1alpha1
+      kind: Repository
+      metadata:
+        annotations:
+          crosslane.io/external-name: test2
+          crossplane.io/composition-resource-name: test-org-test2
+      spec:
+        deletionPolicy: Orphan
+        forProvider:
+          name: test2
+          organizationName: test-org
+          public: true
+          publish: true
+        managementPolicies:
+        - '*'
+        providerConfigRef:
+          name: test-xupboundreposet-repo-config-test-org-reposet
+    - apiVersion: repository.upbound.io/v1alpha1
+      kind: Repository
+      metadata:
+        annotations:
+          crosslane.io/external-name: test3
+          crossplane.io/composition-resource-name: test-org-test3
+      spec:
+        deletionPolicy: Orphan
+        forProvider:
+          name: test3
+          organizationName: test-org
+          public: false
+          publish: true
+        managementPolicies:
+        - '*'
+        providerConfigRef:
+          name: test-xupboundreposet-repo-config-test-org-reposet
+    - apiVersion: repository.upbound.io/v1alpha1
+      kind: Repository
+      metadata:
+        annotations:
+          crosslane.io/external-name: test4
+          crossplane.io/composition-resource-name: test-org-test4
+      spec:
+        deletionPolicy: Orphan
+        forProvider:
+          name: test4
+          organizationName: test-org
+          public: false
+          publish: false
+        managementPolicies:
+        - '*'
+        providerConfigRef:
+          name: test-xupboundreposet-repo-config-test-org-reposet
+    compositionPath: apis/xupboundreposets/composition.yaml
+    timeoutSeconds: 60
+    validate: false
+    xr:
+      apiVersion: sa.upbound.io/v1
+      kind: XUpboundRepoSet
+      metadata:
+        name: test-xupboundreposet-repo-config
+      spec:
+        parameters:
+          organization: test-org
+          permissions:
+            teams:
+              test-team:
+                permission: write
+          repositories:
+            test1:
+              public: true
+              publish: false
+            test2:
+              public: true
+              publish: true
+            test3:
+              public: false
+              publish: true
+            test4: {}
+          settings:
+            public: false
+            publish: false
+          tokenSecretRef:
+            key: creds
+            name: my-secret
+            namespace: default
+    xrdPath: apis/xupboundreposets/definition.yaml

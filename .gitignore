@@ -1,3 +1,10 @@
 _output
 .venv
 .up
+
+# TypeScript migration: generated/local artifacts
+functions/*/node_modules/
+functions/*/dist/
+tests/harness/node_modules/
+schemas/typescript/node_modules/
+_output/

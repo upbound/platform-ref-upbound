@@ -1,0 +1,49 @@
+apiVersion: dev.crossplane.io/v1alpha1
+kind: Project
+metadata:
+  name: platform-ref-upbound
+spec:
+  repository: xpkg.upbound.io/upbound/platform-ref-upbound
+  license: Apache-2.0
+  maintainer: Upbound <info@upbound.io>
+  source: github.com/upbound/platform-ref-upbound
+  description: |
+    platform-ref-upbound enables declarative bootstrapping of Upbound Spaces
+    environments with Cloud Provider integration through a GitOps approach.
+  architectures: [arm64]
+  crossplane:
+    version: '>=v2.0.0'
+  schemas:
+    languages:
+    - typescript
+  dependencies:
+  - type: xpkg
+    xpkg:
+      apiVersion: pkg.crossplane.io/v1
+      kind: Function
+      package: xpkg.crossplane.io/crossplane-contrib/function-auto-ready
+      version: '>=v0.0.0'
+  - type: xpkg
+    xpkg:
+      apiVersion: pkg.crossplane.io/v1
+      kind: Provider
+      package: xpkg.upbound.io/upbound/provider-aws-iam
+      version: '>=v1.0.0'
+  - type: xpkg
+    xpkg:
+      apiVersion: pkg.crossplane.io/v1
+      kind: Provider
+      package: xpkg.upbound.io/upbound/provider-aws-secretsmanager
+      version: '>=v1.0.0'
+  - type: xpkg
+    xpkg:
+      apiVersion: pkg.crossplane.io/v1
+      kind: Provider
+      package: xpkg.upbound.io/upbound/provider-kubernetes
+      version: '>=v0.0.0'
+  - type: xpkg
+    xpkg:
+      apiVersion: pkg.crossplane.io/v1
+      kind: Provider
+      package: xpkg.upbound.io/upbound/provider-upbound
+      version: '>=v0.9.1'

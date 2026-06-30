@@ -1,0 +1,35 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: argo-test
+  namespace: argocd
+spec:
+  data:
+  - secretKey: githubAppPrivateKey
+    remoteRef:
+      key: upboundcare-solutions-non-prod-staging-staging-config
+      property: githubAppPrivateKey
+  - secretKey: githubCreds
+    remoteRef:
+      key: upboundcare-solutions-non-prod-staging-staging-config
+      property: githubCreds
+  refreshInterval: 1m0s
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: bootstrap
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    name: argo-test
+    template:
+      engineVersion: v2
+      mergePolicy: Replace
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: repo-creds
+      data:
+        githubAppID: '{{ $creds := .githubCreds | fromJson }}{{ index $creds.app_auth 0 "id" }}'
+        githubInstallationID: '{{ $creds := .githubCreds | fromJson }}{{ index $creds.app_auth 0 "installation_id" }}'
+        githubPrivateKey: '{{ $creds := .githubCreds | fromJson }}{{ index $creds.app_auth 0 "pem_file" | replace "\\n" "\n" }}'
+        url: '{{ $creds := .githubCreds | fromJson }}https://github.com/{{ $creds.owner }}'
+        type: "git"

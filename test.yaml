@@ -1,0 +1,130 @@
+apiVersion: sa.upbound.io/v1
+kind: XEnvironment
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"sa.upbound.io/v1","kind":"XEnvironment","metadata":{"annotations":{},"name":"production"},"spec":{"parameters":{"aws":{"accountId":"218131738736","providerRole":{"oidcProviderArn":"arn:aws:iam::218131738736:oidc-provider/proidc.upbound.io"},"region":"us-east-1","roleArn":"arn:aws:iam::218131738736:role/solutions-prod-bootstrap","sharedSecret":{"secretsManagerSecretArn":"arn:aws:secretsmanager:us-east-1:218131738736:secret:solutions-solutions-prod-production-production-config-xccdFi"}},"upbound":{"createArgoSecret":false,"initKubeconfigSecretRef":{"name":"bootstrap-ctp-kubeconfig"},"secretSync":[{"destRef":{"name":"ci-e2e-robot-token","namespace":"default"},"sourceRef":{"name":"solutions-prod-ci-robot-token","namespace":"default"}},{"destRef":{"name":"ci-deploy-robot-token","namespace":"default"},"sourceRef":{"name":"default-production-upbound-deploy-robot-token","namespace":"default"}}],"tokenSecretRef":{"name":"solutions-prod-bootstrap-token"}}}}}
+  creationTimestamp: "2025-05-06T09:19:53Z"
+  finalizers:
+  - composite.apiextensions.crossplane.io
+  generation: 16
+  labels:
+    crossplane.io/composite: production
+  name: production
+  resourceVersion: "33167993"
+  uid: 167e0c30-dd0b-48c6-b82f-f2d904a097aa
+spec:
+  compositionRef:
+    name: xenvironments.sa.upbound.io
+  compositionRevisionRef:
+    name: xenvironments.sa.upbound.io-d25e495
+  compositionUpdatePolicy: Automatic
+  parameters:
+    aws:
+      accountId: "218131738736"
+      providerRole:
+        oidcProviderArn: arn:aws:iam::218131738736:oidc-provider/proidc.upbound.io
+      region: us-east-1
+      roleArn: arn:aws:iam::218131738736:role/solutions-prod-bootstrap
+      sharedSecret: {}
+    deletionPolicy: Orphan
+    upbound:
+      createArgoSecret: false
+      createCtp: true
+      createGroup: true
+      initKubeconfigSecretRef:
+        key: kubeconfig
+        name: bootstrap-ctp-kubeconfig
+        namespace: default
+      initProviderConfigName: bootstrap-ctp
+      secretSync:
+      - destRef:
+          name: ci-e2e-robot-token
+          namespace: default
+        sourceRef:
+          name: solutions-prod-ci-robot-token
+          namespace: default
+      - destRef:
+          name: ci-deploy-robot-token
+          namespace: default
+        sourceRef:
+          name: default-production-upbound-deploy-robot-token
+          namespace: default
+      tokenSecretRef:
+        key: token
+        name: solutions-prod-bootstrap-token
+        namespace: default
+  resourceRefs:
+  - apiVersion: apiextensions.crossplane.io/v1alpha1
+    kind: Usage
+    name: production-ctp-kubeconfig
+  - apiVersion: apiextensions.crossplane.io/v1alpha1
+    kind: Usage
+    name: production-space-kubeconfig
+  - apiVersion: apiextensions.crossplane.io/v1alpha1
+    kind: Usage
+    name: solutions-prod-production-group-kubeconfig
+  - apiVersion: aws.upbound.io/v1beta1
+    kind: ProviderConfig
+    name: solutions-prod-production
+  - apiVersion: iam.aws.upbound.io/v1beta1
+    kind: OpenIDConnectProvider
+    name: solutions-solutions-prod-production-production-oidc-provider
+  - apiVersion: iam.aws.upbound.io/v1beta1
+    kind: RolePolicyAttachment
+    name: solutions-solutions-prod-production-production-admin
+  - apiVersion: iam.aws.upbound.io/v1beta1
+    kind: Role
+    name: solutions-solutions-prod-production-production-admin
+  - apiVersion: kubernetes.crossplane.io/v1alpha1
+    kind: ProviderConfig
+    name: production-ctp
+  - apiVersion: kubernetes.crossplane.io/v1alpha1
+    kind: ProviderConfig
+    name: production-space
+  - apiVersion: kubernetes.crossplane.io/v1alpha1
+    kind: ProviderConfig
+    name: solutions-prod-production-group
+  - apiVersion: kubernetes.crossplane.io/v1alpha2
+    kind: Object
+    name: production-2k8mr
+  - apiVersion: kubernetes.crossplane.io/v1alpha2
+    kind: Object
+    name: production-bootstrap-ctp-kubeconfig-observed
+  - apiVersion: kubernetes.crossplane.io/v1alpha2
+    kind: Object
+    name: production-ctp
+  - apiVersion: kubernetes.crossplane.io/v1alpha2
+    kind: Object
+    name: production-ctp-kubeconfig
+  - apiVersion: kubernetes.crossplane.io/v1alpha2
+    kind: Object
+    name: production-space-kubeconfig
+  - apiVersion: kubernetes.crossplane.io/v1alpha2
+    kind: Object
+    name: production-tj2hg
+  - apiVersion: kubernetes.crossplane.io/v1alpha2
+    kind: Object
+    name: solutions-prod-production
+  - apiVersion: kubernetes.crossplane.io/v1alpha2
+    kind: Object
+    name: solutions-prod-production-group-kubeconfig
+  - apiVersion: sa.upbound.io/v1
+    kind: XSharedAWSSecret
+    name: production-shared-secret
+status:
+  conditions:
+  - lastTransitionTime: "2025-10-01T14:53:01Z"
+    reason: ReconcileSuccess
+    status: "True"
+    type: Synced
+  - lastTransitionTime: "2025-10-01T12:53:18Z"
+    message: 'Unready resources: sharedAWSSecret'
+    reason: Creating
+    status: "False"
+    type: Ready
+  upbound:
+    bootstrapCtp: bootstrap
+    bootstrapGroup: solutions-prod
+    org: solutions
+    spaceHost: upbound-gcp-us-central-1.spaces.upbound.io
