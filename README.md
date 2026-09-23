@@ -8,17 +8,34 @@ This Upbound project enables declarative bootstrapping of Upbound Spaces environ
 - [💻 Getting Started](#-getting-started)
 - [🏗️ Architecture](#-architecture)
 - [🔧 Optional Component Configuration](#-optional-component-configuration)
-- [🔐 XSharedAWSSecret](#-xsharedawssecret)
-- [💜 XUpboundRepoSet](#-xupboundreposet)
+- [🔐 SharedAWSSecret](#-sharedawssecret)
+- [💜 UpboundRepoSet](#-upboundreposet)
 - [🐛 Development](#-development)
 
 
 ## 💡 Overview
 
+> **Crossplane v2 (v1.0.0 and later).** The APIs in this configuration are
+> `apiextensions.crossplane.io/v2` with `scope: Namespaced`, and the `X` prefix has been
+> dropped from every kind. In practice:
+>
+> | | Before (≤ v0.7.0) | Now (≥ v1.0.0) |
+> |---|---|---|
+> | Kinds | `XEnvironment`, `XSharedAWSSecret`, `XUpboundRepoSet` | `Environment`, `SharedAWSSecret`, `UpboundRepoSet` |
+> | Scope | cluster-scoped | namespaced — set `metadata.namespace` |
+> | Listing | `kubectl get xenvironments` | `kubectl get environments -n <namespace>` |
+> | Bootstrap ProviderConfig | `kubernetes.crossplane.io/v1alpha1` (cluster) | `kubernetes.m.crossplane.io/v1alpha1` (namespaced, same namespace as the XR) |
+> | Crossplane | ≥ v1.18 | **≥ v2.0** |
+> | Orphaning | `deletionPolicy: Orphan` on each MR | `managementPolicies` — needs `ENABLE_MANAGEMENT_POLICIES=true` on `provider-upbound` (step 6) |
+>
+> This is a breaking change with no in-place upgrade path; deploy v1.0.0 into a fresh
+> control plane rather than upgrading an existing one.
+
+
 ### This repository:
-- **Declarative Environment Management**: Defines your entire environment as code via `XEnvironment`, `XSharedAWSSecret`, and `XUpboundRepoSet` resources
+- **Declarative Environment Management**: Defines your entire environment as code via `Environment`, `SharedAWSSecret`, and `UpboundRepoSet` resources
 - **AWS Integration**: Automatically sets up IAM roles, policies, and OIDC authentication
-- **Secret Management**: Securely transfers credentials between AWS and Upbound via dedicated `XSharedAWSSecret` composition
+- **Secret Management**: Securely transfers credentials between AWS and Upbound via dedicated `SharedAWSSecret` composition
 - **Bootstrap Secret Synchronization**: Copies secrets from bootstrap control plane to target environments
 - **Team & Robot Automation**: Creates teams, robots, and tokens for automated workflows
 - **Repository Management**: Creates and configures Upbound repositories with team permissions and robot access
@@ -30,7 +47,7 @@ This Upbound project enables declarative bootstrapping of Upbound Spaces environ
   - Bootstrap secret synchronization
 
 
-### What does `XEnvironment` Resource do?
+### What does `Environment` Resource do?
 - Upbound Control Planes in Spaces
 - AWS IAM roles and permissions
 - Cross-service authentication with OIDC
@@ -39,7 +56,7 @@ This Upbound project enables declarative bootstrapping of Upbound Spaces environ
 - Provider configurations for Kubernetes resources
 - Teams, robots, and robot tokens for automation
 
-### What does `XUpboundRepoSet` Resource do?
+### What does `UpboundRepoSet` Resource do?
 - Upbound repositories creation and configuration
 - Team-based permission management for repositories
 - Consistent repository configuration across your organization
@@ -128,7 +145,7 @@ kubectl -n default create secret generic bootstrap-kubeconfig --from-file=kubeco
 
 5. Install the configuration:
 
-   *This installs the bootstrap configuration package into your control plane. The configuration contains the `XEnvironment` CRD and composition function that automate environment setup.*
+   *This installs the bootstrap configuration package into your control plane. The configuration contains the `Environment` CRD and composition function that automate environment setup.*
 
 ```bash
 VERSION=""
@@ -143,16 +160,59 @@ cat <<EOF | kubectl apply -f -
 EOF
 ```
 
-6. Create provider config for provider-kubernetes
+6. Enable ManagementPolicies on `provider-upbound` **(required)**
 
-   *This configures the Kubernetes provider to use your `kubeconfig` and token from the earlier steps, enabling it to create resources in your control plane.*
+   *Crossplane v2 namespaced managed resources have no `deletionPolicy` field, so
+   `parameters.deletionPolicy: Orphan` is implemented with `managementPolicies`. In
+   `provider-upbound` that support is an alpha feature and is **off by default** — without
+   this step the composed `Repository` and `Team` resources never reconcile, failing with
+   ``` `spec.managementPolicies` is set to a non-default value but the feature is not enabled ```.
+   `provider-aws` and `provider-kubernetes` already have it on and need nothing.*
+
+   > Set it with an **environment variable**, not a container arg. Upbound Spaces' admission
+   > webhook rejects arbitrary `args` on a package runtime, but explicitly permits environment
+   > variables. `provider-upbound` reads `ENABLE_MANAGEMENT_POLICIES` as an alias for its
+   > `--enable-management-policies` flag.
 
 ```bash
 cat <<EOF | kubectl apply -f -
-  apiVersion: kubernetes.crossplane.io/v1alpha1
+  apiVersion: pkg.crossplane.io/v1beta1
+  kind: DeploymentRuntimeConfig
+  metadata:
+    name: enable-management-policies
+  spec:
+    deploymentTemplate:
+      spec:
+        selector: {}
+        template:
+          spec:
+            containers:
+            - name: package-runtime
+              env:
+              - name: ENABLE_MANAGEMENT_POLICIES
+                value: "true"
+EOF
+
+# bind it to the provider the configuration installed
+kubectl patch provider.pkg.crossplane.io upbound-provider-upbound --type merge -p '{"spec":{"runtimeConfigRef":{"apiVersion":"pkg.crossplane.io/v1beta1","kind":"DeploymentRuntimeConfig","name":"enable-management-policies"}}}'
+```
+
+7. Create provider config for provider-kubernetes
+
+   *This configures the Kubernetes provider to use your `kubeconfig` and token from the earlier steps, enabling it to create resources in your control plane.*
+
+   > **Crossplane v2:** this is the modern, **namespaced** `kubernetes.m.crossplane.io/v1alpha1`
+   > ProviderConfig, and it must live in the same namespace as the `Environment` XR that
+   > references it (`default` below). The pre-v1.0.0 cluster-scoped
+   > `kubernetes.crossplane.io/v1alpha1` ProviderConfig is not used any more.
+
+```bash
+cat <<EOF | kubectl apply -f -
+  apiVersion: kubernetes.m.crossplane.io/v1alpha1
   kind: ProviderConfig
   metadata:
     name: ${UPBOUND_CTP}-ctp
+    namespace: default
   spec:
     credentials:
       source: Secret
@@ -170,7 +230,7 @@ cat <<EOF | kubectl apply -f -
 EOF
 ```
 
-7. Configure credentials for provider-aws (option 1, static credentials)
+8. Configure credentials for provider-aws (option 1, static credentials)
 
    *This creates a secret containing your AWS credentials, allowing the AWS provider to authenticate with AWS services.*
 
@@ -179,9 +239,9 @@ SECRET_PATH=path/to/aws/credentials
 kubectl create secret generic "aws-creds" -n default --from-file=credentials="${SECRET_PATH}"
 ```
 
-8. Create an `XEnvironment` resource:
+9. Create an `Environment` resource:
 
-   *Finally, this creates the XEnvironment resource that ties everything together. This triggers the composition function to create all the necessary resources in both AWS and Upbound to establish your environment.*
+   *Finally, this creates the `Environment` resource that ties everything together. This triggers the composition function to create all the necessary resources in both AWS and Upbound to establish your environment.*
 
 ```bash
 AWS_ACCOUNT_ID="your_accountid"
@@ -189,9 +249,10 @@ AWS_REGION="us-east-1"
 
 cat <<EOF | kubectl apply -f -
   apiVersion: sa.upbound.io/v1
-  kind: XEnvironment
+  kind: Environment
   metadata:
     name: example
+    namespace: default
   spec:
     parameters:
       aws:
@@ -251,7 +312,7 @@ When the `sharedSecret` parameter is specified:
 
 #### ArgoCD Integration
 
-XEnvironment automatically creates ArgoCD cluster secrets for GitOps deployments. Set `createArgoSecret: false` to disable (default: `true`).
+Environment automatically creates ArgoCD cluster secrets for GitOps deployments. Set `createArgoSecret: false` to disable (default: `true`).
 
 **Generated Secret:**
 - **Location**: `argocd` namespace  
@@ -290,25 +351,26 @@ When the `teamWithRobot` parameter is specified (even as an empty object), the b
 
 These resources enable automation through GitOps and CI/CD pipelines, allowing programmatic interaction with control planes. The team structure ensures proper access control and permission management for your environment.
 
-If you don't need team and robot resources, simply omit the `teamWithRobot` parameter from your XEnvironment specification.
+If you don't need team and robot resources, simply omit the `teamWithRobot` parameter from your Environment specification.
 
-## 🔐 XSharedAWSSecret
+## 🔐 SharedAWSSecret
 
-The `XSharedAWSSecret` custom resource provides a dedicated composition for managing AWS Secrets Manager integration with Upbound Spaces.
+The `SharedAWSSecret` custom resource provides a dedicated composition for managing AWS Secrets Manager integration with Upbound Spaces.
 
 ### Usage
 
-The `XSharedAWSSecret` is automatically created by `XEnvironment` when the `sharedSecret` parameter is specified, but can also be used as a standalone resource:
+The `SharedAWSSecret` is automatically created by `Environment` when the `sharedSecret` parameter is specified, but can also be used as a standalone resource:
 
 ```yaml
 apiVersion: sa.upbound.io/v1
-kind: XEnvironment
+kind: Environment
 metadata:
   name: example
+  namespace: default
 spec:
   parameters:
     aws:
-      sharedSecret: {}  # Creates XSharedAWSSecret automatically
+      sharedSecret: {}  # Creates SharedAWSSecret automatically
       # or specify existing secret ARN:
       # sharedSecret:
       #   arn: "arn:aws:secretsmanager:region:account:secret:name"
@@ -318,9 +380,10 @@ spec:
 
 ```yaml
 apiVersion: sa.upbound.io/v1
-kind: XSharedAWSSecret
+kind: SharedAWSSecret
 metadata:
   name: example-shared-secret
+  namespace: default
 spec:
   parameters:
     deletionPolicy: Orphan
@@ -377,7 +440,7 @@ spec:
 - **Granular Secret Data**: Use `externalSecret.spec.data` for individual key-value extraction with property-specific settings (takes precedence over bulk extraction)
 - **Template Data**: Use `externalSecret.spec.target.template.data` to add templated data transformations with External Secrets templating expressions
 
-### What XSharedAWSSecret creates:
+### What SharedAWSSecret creates:
 - IAM user with read permissions for Secrets Manager
 - IAM policy with appropriate permissions (auto-truncated names for long secrets)
 - AWS Secrets Manager secret (conditionally created based on `create` parameter)
@@ -394,17 +457,18 @@ Original: very-long-secret-name-that-exceeds-sixty-four-characters-secrets-read
 Truncated: very-long-secret-name-that-exceeds-12345678-secrets-read
 ```
 
-## 💜 XUpboundRepoSet
+## 💜 UpboundRepoSet
 
-The `XUpboundRepoSet` custom resource allows you to manage Upbound repositories and their permissions declaratively.
+The `UpboundRepoSet` custom resource allows you to manage Upbound repositories and their permissions declaratively.
 
 ### Usage Example
 
 ```yaml
 apiVersion: sa.upbound.io/v1
-kind: XUpboundRepoSet
+kind: UpboundRepoSet
 metadata:
   name: example
+  namespace: default
 spec:
   parameters:
     organization: your-organization
@@ -439,10 +503,10 @@ spec:
 
 The repository includes multiple test configurations:
 
-- Basic functionality tests: `tests/test-xenvironment/`
-- Deletion policy tests: `tests/test-xenvironment-deletion-policy-delete/`
-- No cloud provider resources: `tests/test-xenvironment-no-cloudprovider-resource/`
-- XSharedAWSSecret tests: `tests/test-xsharedawssecret/`
+- Basic functionality tests: `tests/test-environment/`
+- Deletion policy tests: `tests/test-environment-deletion-policy-delete/`
+- No cloud provider resources: `tests/test-environment-no-cloudprovider-resource/`
+- SharedAWSSecret tests: `tests/test-sharedawssecret/`
 
 To run tests:
 
