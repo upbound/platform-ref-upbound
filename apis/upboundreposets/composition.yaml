@@ -1,0 +1,16 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: upboundreposets.sa.upbound.io
+spec:
+  compositeTypeRef:
+    apiVersion: sa.upbound.io/v1
+    kind: UpboundRepoSet
+  mode: Pipeline
+  pipeline:
+  - functionRef:
+      name: upbound-platform-ref-upboundupboundreposet
+    step: upboundreposet
+  - functionRef:
+      name: crossplane-contrib-function-auto-ready
+    step: crossplane-contrib-function-auto-ready

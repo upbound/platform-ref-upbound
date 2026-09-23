@@ -1,0 +1,16 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: sharedawssecrets.sa.upbound.io
+spec:
+  compositeTypeRef:
+    apiVersion: sa.upbound.io/v1
+    kind: SharedAWSSecret
+  mode: Pipeline
+  pipeline:
+  - functionRef:
+      name: upbound-platform-ref-upboundsharedawssecret
+    step: sharedawssecret
+  - functionRef:
+      name: crossplane-contrib-function-auto-ready
+    step: crossplane-contrib-function-auto-ready
