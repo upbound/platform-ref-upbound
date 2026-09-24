@@ -29,8 +29,8 @@ spec:
                     description: Determines whether all managed resources will be deleted or orphaned when the Environment is deleted. Options are Delete or Orphan. Default is Orphan.
                     type: string
                     enum:
-                      - Delete
-                      - Orphan
+                    - Delete
+                    - Orphan
                     default: Orphan
                   aws:
                     description: AWS-specific configuration for the environment.
@@ -161,8 +161,8 @@ spec:
                             description: ARN of an existing AWS OIDC provider to use instead of creating a new one.
                             type: string
                     required:
-                      - accountId
-                      - region
+                    - accountId
+                    - region
                   upbound:
                     type: object
                     properties:
@@ -206,7 +206,7 @@ spec:
                             type: string
                             default: "default"
                         required:
-                          - name
+                        - name
                       initKubeconfigSecretRef:
                         type: object
                         description: The kubeconfig used to initialize the environment.
@@ -220,7 +220,7 @@ spec:
                             type: string
                             default: "default"
                         required:
-                          - name
+                        - name
                       initProviderConfigName:
                         type: string
                         default: "bootstrap-ctp"
@@ -232,8 +232,8 @@ spec:
                           teamExternalName:
                             type: string
                     required:
-                      - initKubeconfigSecretRef
-                      - tokenSecretRef
+                    - initKubeconfigSecretRef
+                    - tokenSecretRef
 
           status:
             description: EnvironmentStatus defines the observed state of Environment.
