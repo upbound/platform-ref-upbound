@@ -202,12 +202,15 @@ kubectl patch provider.pkg.crossplane.io upbound-provider-upbound --type merge -
 
    **b. Disable server-side apply on `provider-kubernetes`.**
 
-   *`provider-kubernetes` v1 defaults `--enable-server-side-apply` to true. The Upbound Spaces
-   API does not accept apply patches, so every object this configuration creates through a
-   Spaces-backed ProviderConfig — the environment group, the control plane, the
-   SharedSecretStore and the SharedExternalSecret — fails with ``Unsupported patch format.
-   Only merge and json patch are supported.`` Turning it off selects the provider's
-   merge-patch syncer, which Spaces does accept.*
+   *`provider-kubernetes` v1 defaults `--enable-server-side-apply` to true. Spaces **control
+   planes** accept server-side apply — they are ordinary Kubernetes API servers — but the
+   **Spaces API gateway** (`https://<spaceHost>`, which serves groups and `spaces.upbound.io`
+   resources) does not. This configuration builds ProviderConfigs pointing at both, so the
+   objects created through the gateway — the environment group Namespace, the ControlPlane,
+   the SharedSecretStore and the SharedExternalSecret — fail with ``invalid patch type`` or
+   ``Unsupported patch format. Only merge and json patch are supported.`` while objects
+   targeting a control plane reconcile normally. Turning the flag off selects the provider's
+   merge-patch syncer, which the gateway accepts.*
 
 ```bash
 cat <<EOF | kubectl apply -f -
