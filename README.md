@@ -460,10 +460,10 @@ up test run "tests/*" --e2e        # end-to-end, against a real control plane
 > deliberately fails generation when its variables are unset — better than provisioning a
 > control plane and only then discovering an empty credential.
 
-The e2e suite reads `UP_API_TOKEN`, `UP_ORG`, `UP_GROUP` and `UP_SPACE`, which are the names
-`.github/workflows/e2e.yaml` already exports, so a local run and a CI run read the same thing.
-The Spaces API host is derived from `UP_SPACE` rather than configured separately, so it cannot
-drift from the space the workflow switches to.
+The e2e suite reads `UP_API_TOKEN`, `UP_ORG` and `UP_GROUP` — the names
+`.github/workflows/e2e.yaml` exports — and asserts on all three, so a missing credential fails
+at generation rather than after a control plane has been provisioned. `UP_SPACE` is optional
+and defaults to the space the workflow switches to; the Spaces API host is derived from it.
 
 | Suite | Covers |
 |---|---|

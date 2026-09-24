@@ -35,12 +35,20 @@ _mustEnv = lambda name: str -> str {
     _v
 }
 
+# Credentials must be present or the run is pointless, so these assert.
 _token = _mustEnv("UP_API_TOKEN")
 _org   = _mustEnv("UP_ORG")
 _group = _mustEnv("UP_GROUP")
-# Derived rather than configured separately, so it cannot drift from the space the workflow
-# actually switches to.
-_spaceHost = "{}.spaces.upbound.io".format(_mustEnv("UP_SPACE"))
+
+# The space is different: there is a correct default, and it only has to agree with the space
+# the workflow's `up ctx` step switches to. It also cannot be required, because e2e.yaml runs
+# on pull_request_target - the workflow definition comes from the base branch while the code
+# comes from the PR head, so a variable added to the workflow in a PR is not set when that
+# same PR is tested. Asserting on it would make the suite unrunnable until after merge.
+_space = file.read_env("UP_SPACE")
+if _space == "" or _space == Undefined or _space == None:
+    _space = "upbound-gcp-us-central-1"
+_spaceHost = "{}.spaces.upbound.io".format(_space)
 
 # The composition learns the Space it lives in by observing this Secret and regex-parsing the
 # server URL, so the URL shape is load-bearing: the 5th path segment becomes bootstrapGroup and
