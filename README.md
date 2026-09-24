@@ -317,8 +317,12 @@ Otherwise use `credsSecretRef` with a standard AWS credentials file.
 
 > The OIDC provider is an **account-wide singleton** — AWS permits only one per URL. If
 > `proidc.upbound.io` already exists in the account, pass its ARN as
-> `providerRole.oidcProviderArn` so it is adopted rather than duplicated, and keep
-> `deletionPolicy: Orphan` so teardown cannot remove a provider other environments rely on.
+> `providerRole.oidcProviderArn` so it is adopted rather than duplicated.
+>
+> An adopted provider is **always orphaned**, whatever `deletionPolicy` says, because the
+> composition did not create it and deleting it would break every other Upbound integration
+> in that AWS account. A provider the composition *does* create follows `deletionPolicy`
+> normally.
 
 #### secretSync
 

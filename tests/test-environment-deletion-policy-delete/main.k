@@ -135,5 +135,67 @@ _items = [
             validate = False
         }
     }
+    # Adoption must override deletionPolicy. With an oidcProviderArn supplied the composition
+    # is adopting a provider it did not create, and AWS allows only one per URL per account -
+    # proidc.upbound.io is shared by every Upbound integration there. Deleting it on teardown
+    # would break all of them, so it stays orphaned even though the XR says Delete. The Role
+    # beside it is created by us and must still honour Delete.
+    metav1alpha1.CompositionTest{
+        metadata.name: "test-environment-adopted-oidc-is-orphaned"
+        spec = {
+            assertResources = [
+                iamv1beta1.OpenIDConnectProvider{
+                    metadata = {
+                        name = "upbound-solutions-non-prod-example-example-oidc-provider"
+                        annotations = {
+                            "crossplane.io/external-name" = "arn:aws:iam::12345678912:oidc-provider/proidc.upbound.io"
+                        }
+                    }
+                    spec = {
+                        forProvider = {}
+                        managementPolicies = ["Create", "Observe", "Update", "LateInitialize"]
+                    }
+                }
+                iamv1beta1.Role{
+                    metadata.name = "upbound-solutions-non-prod-example-example-admin"
+                    spec = {
+                        forProvider = {}
+                        managementPolicies = ["*"]
+                    }
+                }
+            ]
+            compositionPath = "apis/environments/composition.yaml"
+            xrdPath = "apis/environments/definition.yaml"
+            xr: sav1.Environment{
+                metadata = {
+                    name = "example"
+                    namespace = "default"
+                }
+                spec.parameters = {
+                    deletionPolicy = "Delete"
+                    aws = {
+                        accountId = "12345678912"
+                        region = "us-east-1"
+                        credsSecretRef = {name = "aws-creds-example", namespace = "default"}
+                        providerRole = {
+                            oidcProviderArn = "arn:aws:iam::12345678912:oidc-provider/proidc.upbound.io"
+                        }
+                    }
+                    upbound = {
+                        initKubeconfigSecretRef = {name = "init-kubeconfig"}
+                        tokenSecretRef = {name = "upbound-token"}
+                    }
+                }
+                status.upbound = {
+                    bootstrapCtp = "bootstrap"
+                    bootstrapGroup = "solutions-non-prod"
+                    org = "upbound"
+                    spaceHost = "upbound-aws-us-east-1.space.mxe.upbound.io"
+                }
+            }
+            timeoutSeconds = 60
+            validate = False
+        }
+    }
 ]
 items = _items

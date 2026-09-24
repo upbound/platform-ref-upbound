@@ -98,7 +98,12 @@ getXPRoleItems = lambda awsParams: AWSXPRoleInput -> [any] {
             }
         }
         spec = {
-            managementPolicies = utils._managementPolicies(awsParams.deletionPolicy)
+            # Adoption implies orphaning, whatever the XR-level deletionPolicy says. When
+            # oidcProviderArn is supplied this composition did not create the provider, and
+            # AWS allows only ONE OIDC provider per URL per account - proidc.upbound.io is
+            # shared by every Upbound integration in that account. Deleting it on teardown
+            # would break all of them, so an adopted provider is never deleted.
+            managementPolicies = ["Create", "Observe", "Update", "LateInitialize"] if awsParams.oidcProviderArn else utils._managementPolicies(awsParams.deletionPolicy)
             forProvider = {
                 clientIdList = ["sts.amazonaws.com"]
                 url = "https://proidc.upbound.io"
