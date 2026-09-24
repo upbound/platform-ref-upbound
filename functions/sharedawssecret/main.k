@@ -48,9 +48,15 @@ region = oxr.spec.parameters.aws.region
 
 secretsManagerSecretArn = oxr.spec.parameters.aws.secretsManagerSecret?.arn or Undefined
 secretsManagerSecretName = oxr.spec.parameters.aws.secretsManagerSecret?.name or Undefined
-_secretsManagerSecretCreate = True
-if oxr.spec.parameters.aws.secretsManagerSecret?.create != Undefined:
-    _secretsManagerSecretCreate = oxr.spec.parameters.aws.secretsManagerSecret.create
+# Keep the `?.` chain on every access: secretsManagerSecret is optional, and reading
+# .create directly off it crashes the whole pipeline when the caller omits the block
+# (which Environment does whenever sharedSecret is given without secretsManagerSecret).
+# Creation is opt-out, not opt-in: only an explicit `false` disables it. Written this way
+# because the block is optional and an absent one yields None rather than Undefined, so
+# neither a bare `.create` (crashes) nor an `== Undefined` test (silently returns falsy,
+# skipping the secret entirely) is safe here.
+_smsCreate = oxr.spec.parameters.aws.secretsManagerSecret?.create
+_secretsManagerSecretCreate = False if _smsCreate == False else True
 
 groupName = oxr.spec.parameters.upbound.group
 ctpName = oxr.spec.parameters.upbound.controlPlane

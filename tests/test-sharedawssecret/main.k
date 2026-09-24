@@ -898,5 +898,62 @@ _items = [
             validate: False
         }
     }
+    # Regression guard: secretsManagerSecret is an optional block, and Environment omits it
+    # whenever sharedSecret is set without one. Reading .create directly off the absent block
+    # aborted the whole pipeline on a live control plane while every other case here passed,
+    # because they all happen to set it.
+    metav1alpha1.CompositionTest{
+        metadata.name: "test-sharedawssecret-no-secretsmanager-block"
+        spec= {
+            assertResources: [
+                secretsmanagerv1beta1.Secret{
+                    metadata.name = "example-env-config-secretsmanager-secret"
+                    spec = {
+                        forProvider = {
+                            # create defaults to true when the block is absent
+                            name = "example-env-config"
+                            region = "us-east-1"
+                        }
+                        managementPolicies = ["Create", "Observe", "Update", "LateInitialize"]
+                        providerConfigRef = {
+                            kind = "ProviderConfig"
+                            name = "example-env"
+                        }
+                    }
+                }
+            ]
+            compositionPath: "apis/sharedawssecrets/composition.yaml"
+            xr: sav1.SharedAWSSecret{
+                metadata = {
+                    name = "example-shared-secret"
+                    namespace = "default"
+                }
+                spec = {
+                    parameters = {
+                        deletionPolicy = "Orphan"
+                        aws = {
+                            accountId = "123456789012"
+                            region = "us-east-1"
+                            # secretsManagerSecret deliberately omitted
+                            namePrefix = "example-env"
+                            providerConfigRef = {
+                                name = "example-env"
+                            }
+                        }
+                        upbound = {
+                            group = "example-env"
+                            controlPlane = "example-ctp"
+                            providerConfigRef = {
+                                name = "example-env-group"
+                            }
+                        }
+                    }
+                }
+            }
+            xrdPath: "apis/sharedawssecrets/definition.yaml"
+            timeoutSeconds: 60
+            validate: False
+        }
+    }
 ]
 items= _items

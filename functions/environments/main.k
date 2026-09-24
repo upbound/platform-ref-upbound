@@ -72,11 +72,13 @@ if _initialKubeconfig:
 
 # Readiness-check for proceeding with read from status
 _oxrStatusUpbound = oxr.status?.upbound
-_initReady = _oxrStatusUpbound != Undefined and \
-    _oxrStatusUpbound.org != Undefined and \
-    _oxrStatusUpbound.bootstrapCtp != Undefined and \
-    _oxrStatusUpbound.bootstrapGroup != Undefined and \
-    _oxrStatusUpbound.spaceHost != Undefined
+# `?.` on every hop. On the very first reconcile status.upbound is None rather than
+# Undefined, so `_oxrStatusUpbound != Undefined` passes and a bare `.org` then aborts
+# the whole pipeline with "invalid value 'NoneType' to load attribute 'org'".
+_initReady = _oxrStatusUpbound?.org != Undefined and \
+    _oxrStatusUpbound?.bootstrapCtp != Undefined and \
+    _oxrStatusUpbound?.bootstrapGroup != Undefined and \
+    _oxrStatusUpbound?.spaceHost != Undefined
 
 _initItems = [
     sav1.Environment{
