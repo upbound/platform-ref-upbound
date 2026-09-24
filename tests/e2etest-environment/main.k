@@ -92,6 +92,12 @@ _items = [
             # than left to dependency resolution, so that each is bound to its
             # DeploymentRuntimeConfig from the moment it starts - neither default works
             # against Upbound Spaces. See README step 5 for why.
+            #
+            # enable-management-policies is temporary: upbound/provider-upbound#41 flips that
+            # default and is merged, but unreleased as of v1.1.1. Drop it, and the Provider
+            # override with it, once a release containing the fix is pinned below.
+            # disable-server-side-apply is permanent - SSA is the right default for
+            # provider-kubernetes, and the Spaces API gateway is the exception.
             initResources = [
                 # Plain dicts: this project generates no models for the pkg.crossplane.io
                 # API group, and adding an apiDependency just for two literals is not worth it.

@@ -146,6 +146,14 @@ have no `deletionPolicy` field, so `parameters.deletionPolicy: Orphan` is implem
 off, so without this the composed `Repository` and `Team` fail with ``spec.managementPolicies
 is set to a non-default value but the feature is not enabled``.
 
+> **Temporary.** [provider-upbound#41](https://github.com/upbound/provider-upbound/pull/41)
+> flips that default to true and is merged, but is not in a release yet — the latest is
+> v1.1.1, which this configuration pins. Once a release containing it ships, bump
+> `provider-upbound` in `upbound.yaml` and delete this step along with the
+> `enable-management-policies` DeploymentRuntimeConfig. Step **b** has no such fix pending:
+> server-side apply is the correct default for `provider-kubernetes` generally, and Spaces is
+> the exception, so that one stays.
+
 **b. Disable server-side apply on `provider-kubernetes`.** Spaces *control planes* accept
 server-side apply — they are ordinary Kubernetes API servers — but the **Spaces API gateway**
 (`https://<spaceHost>`, which serves groups and `spaces.upbound.io` resources) does not.
