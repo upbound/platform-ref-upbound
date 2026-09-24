@@ -465,6 +465,12 @@ The e2e suite reads `UP_API_TOKEN`, `UP_ORG` and `UP_GROUP` — the names
 at generation rather than after a control plane has been provisioned. `UP_SPACE` is optional
 and defaults to the space the workflow switches to; the Spaces API host is derived from it.
 
+> `spec.timeoutSeconds` does **not** reach uptest's per-resource assertion, which defaults to
+> 30 seconds. The `uptest.upbound.io/timeout` annotation on the XR is what overrides it, and it
+> has to outlast *provider installation* rather than just provisioning — asserting begins once
+> the configuration package is ready, which is well before its dependency providers are. Keep
+> the annotation and `timeoutSeconds` in step.
+
 | Suite | Covers |
 |---|---|
 | `tests/test-environment` | full environment, all features enabled |

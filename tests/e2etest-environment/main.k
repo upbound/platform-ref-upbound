@@ -180,7 +180,25 @@ _items = [
 
             manifests = [
                 sav1.Environment{
-                    metadata = {name = "e2e", namespace = "default"}
+                    metadata = {
+                        name = "e2e"
+                        namespace = "default"
+                        annotations = {
+                            # uptest asserts PER RESOURCE with a 30 second default, and
+                            # spec.timeoutSeconds below does not reach it - only this
+                            # annotation does. Keep the two numbers the same.
+                            #
+                            # It has to outlast provider installation, not just provisioning.
+                            # `up test run` starts asserting once the *configuration* package
+                            # is ready, which is not the same as its dependency providers
+                            # being ready; provider images are large, so on a fresh control
+                            # plane there is a multi-minute window where the managed resource
+                            # CRDs do not exist and the composition cannot succeed. A run that
+                            # happens to get fast provider installs passes, one that does not
+                            # fails - which is exactly the flake this avoids.
+                            "uptest.upbound.io/timeout" = "3600"
+                        }
+                    }
                     spec.parameters = {
                         # Delete, not Orphan: a CI suite has to clean up after itself.
                         deletionPolicy = "Delete"
