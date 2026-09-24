@@ -9,6 +9,7 @@ This module supports creating provider configurations at different scopes:
 """
 
 import models.io.crossplane.kubernetesm.v1alpha1 as kubernetesm
+import base64
 import utils
 
 schema UpboundTokenSecretRef:
@@ -152,12 +153,17 @@ upboundProviderConfig = lambda config: UpboundProviderConfigInput -> any {
                             name = "{}-kubeconfig".format(configName(config.group, config.ctp, config.prefix))
                             namespace = "default"
                         }
-                        stringData = {
-                            kubeconfig = upboundKubeconfig(
+                        # `data` with base64, not `stringData`. provider-kubernetes applies
+                        # server-side and records field ownership for what it wrote; because
+                        # Kubernetes converts stringData -> data on write, the owned field is
+                        # never present on the stored object and the next observe fails with
+                        # "unable to convert managed fields ... expected map, got <nil>".
+                        data = {
+                            kubeconfig = base64.encode(upboundKubeconfig(
                                             config.spaceHost,
                                             config.org,
                                             config.group if config.group else "default",
-                                            config.ctp if config.ctp else "")
+                                            config.ctp if config.ctp else ""))
                         }
                     }
                 }

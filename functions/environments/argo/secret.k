@@ -2,6 +2,7 @@ import models.io.crossplane.kubernetesm.v1alpha1 as kubernetesm
 import models.io.k8s.api.core.v1 as v1
 import utils
 import json
+import base64
 
 argoServerSecret = lambda config: ArgoServerSecret -> any {
    """
@@ -23,10 +24,12 @@ argoServerSecret = lambda config: ArgoServerSecret -> any {
                             }
                         }
                         type: "Opaque"
-                        stringData: {
-                            name: "{}-{}".format(config.group,config.ctp)
-                            server: "https://{}/apis/spaces.upbound.io/v1beta1/namespaces/{}/controlplanes/{}/k8s".format(config.spaceHost, config.group, config.ctp)
-                            config: json.encode({
+                        # base64 `data`, not `stringData` - see pKubernetesHelper.k for why
+                        # provider-kubernetes cannot observe a stringData-owned field.
+                        data: {
+                            name: base64.encode("{}-{}".format(config.group,config.ctp))
+                            server: base64.encode("https://{}/apis/spaces.upbound.io/v1beta1/namespaces/{}/controlplanes/{}/k8s".format(config.spaceHost, config.group, config.ctp))
+                            config: base64.encode(json.encode({
                                 execProviderConfig: {
                                     apiVersion: "client.authentication.k8s.io/v1"
                                     command: "up"
@@ -43,7 +46,7 @@ argoServerSecret = lambda config: ArgoServerSecret -> any {
                                     insecure: False
                                     caData: config.serverCaData
                                 }
-                            })
+                            }))
                         }
                     }
                 }
