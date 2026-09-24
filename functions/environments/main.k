@@ -100,6 +100,18 @@ _initItems = [
     kubernetesm.Object{
         metadata = utils._metadata("observedCtpKubeconfig") | {
             name = "{}-bootstrap-ctp-kubeconfig-observed".format(oxrMeta.name)
+            annotations = {
+                # Gates the whole XR's readiness on initialisation having finished.
+                #
+                # Until the bootstrap kubeconfig is observed and status.upbound populated,
+                # this observer is the ONLY composed resource - and it goes ready as soon as
+                # the Secret it watches exists. function-auto-ready would then see "every
+                # composed resource is ready" and report the Environment as Ready before a
+                # single group, control plane, ProviderConfig or IAM resource had been
+                # created. Anything polling Ready to know the environment is up gets a
+                # false positive for that window.
+                "krm.kcl.dev/ready" = "True" if _initReady else "False"
+            }
         }
         spec = {
             forProvider = {
