@@ -27,6 +27,7 @@ This Upbound project enables declarative bootstrapping of Upbound Spaces environ
 > | Bootstrap ProviderConfig | `kubernetes.crossplane.io/v1alpha1` (cluster) | `kubernetes.m.crossplane.io/v1alpha1` (namespaced, same namespace as the XR) |
 > | Crossplane | ≥ v1.18 | **≥ v2.0** |
 > | Orphaning | `deletionPolicy: Orphan` on each MR | `managementPolicies` — needs `ENABLE_MANAGEMENT_POLICIES=true` on `provider-upbound` (step 6) |
+> | Provider runtime | no extra configuration | two `DeploymentRuntimeConfig`s required — see step 6 |
 >
 > This is a breaking change with no in-place upgrade path; deploy v1.0.0 into a fresh
 > control plane rather than upgrading an existing one.
@@ -160,7 +161,7 @@ cat <<EOF | kubectl apply -f -
 EOF
 ```
 
-6. Enable ManagementPolicies on `provider-upbound` **(required)**
+6. Configure the provider runtimes **(required)**
 
    *Crossplane v2 namespaced managed resources have no `deletionPolicy` field, so
    `parameters.deletionPolicy: Orphan` is implemented with `managementPolicies`. In
@@ -168,6 +169,8 @@ EOF
    this step the composed `Repository` and `Team` resources never reconcile, failing with
    ``` `spec.managementPolicies` is set to a non-default value but the feature is not enabled ```.
    `provider-aws` and `provider-kubernetes` already have it on and need nothing.*
+
+   **a. Enable ManagementPolicies on `provider-upbound`.**
 
    > Set it with an **environment variable**, not a container arg. Upbound Spaces' admission
    > webhook rejects arbitrary `args` on a package runtime, but explicitly permits environment
@@ -195,6 +198,37 @@ EOF
 
 # bind it to the provider the configuration installed
 kubectl patch provider.pkg.crossplane.io upbound-provider-upbound --type merge -p '{"spec":{"runtimeConfigRef":{"apiVersion":"pkg.crossplane.io/v1beta1","kind":"DeploymentRuntimeConfig","name":"enable-management-policies"}}}'
+```
+
+   **b. Disable server-side apply on `provider-kubernetes`.**
+
+   *`provider-kubernetes` v1 defaults `--enable-server-side-apply` to true. The Upbound Spaces
+   API does not accept apply patches, so every object this configuration creates through a
+   Spaces-backed ProviderConfig — the environment group, the control plane, the
+   SharedSecretStore and the SharedExternalSecret — fails with ``Unsupported patch format.
+   Only merge and json patch are supported.`` Turning it off selects the provider's
+   merge-patch syncer, which Spaces does accept.*
+
+```bash
+cat <<EOF | kubectl apply -f -
+  apiVersion: pkg.crossplane.io/v1beta1
+  kind: DeploymentRuntimeConfig
+  metadata:
+    name: disable-server-side-apply
+  spec:
+    deploymentTemplate:
+      spec:
+        selector: {}
+        template:
+          spec:
+            containers:
+            - name: package-runtime
+              env:
+              - name: ENABLE_SERVER_SIDE_APPLY
+                value: "false"
+EOF
+
+kubectl patch provider.pkg.crossplane.io upbound-provider-kubernetes --type merge -p '{"spec":{"runtimeConfigRef":{"apiVersion":"pkg.crossplane.io/v1beta1","kind":"DeploymentRuntimeConfig","name":"disable-server-side-apply"}}}'
 ```
 
 7. Create provider config for provider-kubernetes
