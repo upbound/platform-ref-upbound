@@ -451,9 +451,14 @@ delete the repository or its published packages.
 
 ```bash
 up project build
-up test run "tests/*"              # composition tests
+up test run "tests/test-*"         # composition tests
 up test run "tests/*" --e2e        # end-to-end, against a real control plane
 ```
+
+> The composition glob is `tests/test-*`, not `tests/*`. `up test run` generates manifests for
+> every directory it matches, even ones it will not execute, and `tests/e2etest-environment`
+> deliberately fails generation when its `UP_E2E_*` variables are unset — better than
+> provisioning a control plane and only then discovering an empty credential.
 
 | Suite | Covers |
 |---|---|

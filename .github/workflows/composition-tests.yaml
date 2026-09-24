@@ -23,4 +23,4 @@ jobs:
         run: up project build
 
       - name: Run composition tests
-        run: up test run tests/*
+        run: up test run tests/test-*
