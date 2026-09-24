@@ -457,8 +457,13 @@ up test run "tests/*" --e2e        # end-to-end, against a real control plane
 
 > The composition glob is `tests/test-*`, not `tests/*`. `up test run` generates manifests for
 > every directory it matches, even ones it will not execute, and `tests/e2etest-environment`
-> deliberately fails generation when its `UP_E2E_*` variables are unset — better than
-> provisioning a control plane and only then discovering an empty credential.
+> deliberately fails generation when its variables are unset — better than provisioning a
+> control plane and only then discovering an empty credential.
+
+The e2e suite reads `UP_API_TOKEN`, `UP_ORG`, `UP_GROUP` and `UP_SPACE`, which are the names
+`.github/workflows/e2e.yaml` already exports, so a local run and a CI run read the same thing.
+The Spaces API host is derived from `UP_SPACE` rather than configured separately, so it cannot
+drift from the space the workflow switches to.
 
 | Suite | Covers |
 |---|---|

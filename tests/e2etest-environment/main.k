@@ -6,10 +6,13 @@ and Secrets Manager resources, then asserts the Environment XR reaches Ready.
 
 Run it with:
 
-    export UP_E2E_API_TOKEN=...      # Upbound token; needs group/control-plane create rights
-    export UP_E2E_ORG=solutions
-    export UP_E2E_GROUP=default
-    export UP_E2E_SPACE_HOST=upbound-aws-us-east-1.spaces.upbound.io
+    export UP_API_TOKEN=...          # Upbound token; needs group/control-plane create rights
+    export UP_ORG=solutions
+    export UP_GROUP=default
+    export UP_SPACE=upbound-aws-us-east-1
+
+These are the names .github/workflows/e2e.yaml already exports, so a local run and a CI run
+read the same thing.
     up test run tests/e2etest-environment --e2e
 
 `file.read_env` is how a value reaches a KCL test module - manifest generation runs in a
@@ -32,10 +35,12 @@ _mustEnv = lambda name: str -> str {
     _v
 }
 
-_token     = _mustEnv("UP_E2E_API_TOKEN")
-_org       = _mustEnv("UP_E2E_ORG")
-_group     = _mustEnv("UP_E2E_GROUP")
-_spaceHost = _mustEnv("UP_E2E_SPACE_HOST")
+_token = _mustEnv("UP_API_TOKEN")
+_org   = _mustEnv("UP_ORG")
+_group = _mustEnv("UP_GROUP")
+# Derived rather than configured separately, so it cannot drift from the space the workflow
+# actually switches to.
+_spaceHost = "{}.spaces.upbound.io".format(_mustEnv("UP_SPACE"))
 
 # The composition learns the Space it lives in by observing this Secret and regex-parsing the
 # server URL, so the URL shape is load-bearing: the 5th path segment becomes bootstrapGroup and
