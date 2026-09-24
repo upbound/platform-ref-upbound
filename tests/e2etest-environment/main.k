@@ -19,6 +19,8 @@ on an unset variable rather than generating a manifest with an empty credential 
 
 import file
 import models.io.crossplane.kubernetesm.v1alpha1 as kubernetesm
+import models.io.crossplane.pkg.v1 as pkgv1
+import models.io.crossplane.pkg.v1beta1 as pkgv1beta1
 import models.io.k8s.api.core.v1 as corev1
 import models.io.upbound.dev.meta.v1alpha1 as metav1alpha1
 import models.io.upbound.sa.v1 as sav1
@@ -99,11 +101,7 @@ _items = [
             # disable-server-side-apply is permanent - SSA is the right default for
             # provider-kubernetes, and the Spaces API gateway is the exception.
             initResources = [
-                # Plain dicts: this project generates no models for the pkg.crossplane.io
-                # API group, and adding an apiDependency just for two literals is not worth it.
-                {
-                    apiVersion = "pkg.crossplane.io/v1beta1"
-                    kind = "DeploymentRuntimeConfig"
+                pkgv1beta1.DeploymentRuntimeConfig{
                     metadata.name = "enable-management-policies"
                     spec.deploymentTemplate.spec = {
                         selector = {}
@@ -113,9 +111,7 @@ _items = [
                         }]
                     }
                 }
-                {
-                    apiVersion = "pkg.crossplane.io/v1beta1"
-                    kind = "DeploymentRuntimeConfig"
+                pkgv1beta1.DeploymentRuntimeConfig{
                     metadata.name = "disable-server-side-apply"
                     spec.deploymentTemplate.spec = {
                         selector = {}
@@ -125,9 +121,7 @@ _items = [
                         }]
                     }
                 }
-                {
-                    apiVersion = "pkg.crossplane.io/v1"
-                    kind = "Provider"
+                pkgv1.Provider{
                     metadata.name = "upbound-provider-upbound"
                     spec = {
                         package = "xpkg.upbound.io/upbound/provider-upbound:v1.1.1"
@@ -138,9 +132,7 @@ _items = [
                         }
                     }
                 }
-                {
-                    apiVersion = "pkg.crossplane.io/v1"
-                    kind = "Provider"
+                pkgv1.Provider{
                     metadata.name = "upbound-provider-kubernetes"
                     spec = {
                         package = "xpkg.upbound.io/upbound/provider-kubernetes:v1.3.3"

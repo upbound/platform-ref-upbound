@@ -9,6 +9,7 @@ This module supports creating provider configurations at different scopes:
 """
 
 import models.io.crossplane.kubernetesm.v1alpha1 as kubernetesm
+import models.io.crossplane.protection.v1beta1 as protectionv1beta1
 import base64
 import utils
 
@@ -203,9 +204,7 @@ upboundProviderConfig = lambda config: UpboundProviderConfigInput -> any {
             }
         }
 
-        {
-            apiVersion = "protection.crossplane.io/v1beta1"
-            kind = "Usage"
+        protectionv1beta1.Usage{
             metadata = utils._metadata("{}Usage".format(resourceName(config.group, config.ctp))) | {
                 name = "{}-kubeconfig".format(configName(config.group, config.ctp, config.prefix))
             }

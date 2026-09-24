@@ -7,6 +7,11 @@ spec:
   - k8s:
       version: v1.33.0
     type: k8s
+  - git:
+      path: cluster/crds
+      ref: release-2.4
+      repository: https://github.com/crossplane/crossplane
+    type: crd
   crossplane:
     version: '>=v2.0.0-0'
   dependsOn:
