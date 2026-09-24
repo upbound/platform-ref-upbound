@@ -72,13 +72,15 @@ if _initialKubeconfig:
 
 # Readiness-check for proceeding with read from status
 _oxrStatusUpbound = oxr.status?.upbound
-# `?.` on every hop. On the very first reconcile status.upbound is None rather than
-# Undefined, so `_oxrStatusUpbound != Undefined` passes and a bare `.org` then aborts
-# the whole pipeline with "invalid value 'NoneType' to load attribute 'org'".
-_initReady = _oxrStatusUpbound?.org != Undefined and \
-    _oxrStatusUpbound?.bootstrapCtp != Undefined and \
-    _oxrStatusUpbound?.bootstrapGroup != Undefined and \
-    _oxrStatusUpbound?.spaceHost != Undefined
+# Truthiness, not `!= Undefined`. On a fresh XR status.upbound is None, and in KCL both
+# `None != Undefined` and `None?.field != Undefined` evaluate TRUE - so an Undefined-based
+# guard lets an empty status through and the pipeline dies further down on the first
+# `.bootstrapGroup`. These are all non-empty strings once set, so a plain truthy test is
+# the only form that is correct for None, Undefined and "" alike.
+_initReady = _oxrStatusUpbound?.org and \
+    _oxrStatusUpbound?.bootstrapCtp and \
+    _oxrStatusUpbound?.bootstrapGroup and \
+    _oxrStatusUpbound?.spaceHost
 
 _initItems = [
     sav1.Environment{
