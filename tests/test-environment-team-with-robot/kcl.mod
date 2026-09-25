@@ -1,5 +1,5 @@
 [package]
-name = "upboundreposet"
+name = "test-environment-team-with-robot"
 version = "0.0.1"
 
 [dependencies]
