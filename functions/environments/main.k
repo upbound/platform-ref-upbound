@@ -263,19 +263,23 @@ if _initReady:
             }
         })
 
-    if oxrSpec.parameters.upbound.createGroup:
-        _upboundItems += pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
-            # environment group level providerconfig for provider-kubernetes
-            spaceHost = _oxrStatusUpbound.spaceHost
-            org = _oxrStatusUpbound.org
-            group = envGroupName
-            providerConfigName = "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
-            upboundTokenSecretRef = pKubernetesHelper.UpboundTokenSecretRef{
-                name = oxrSpec.parameters.upbound.tokenSecretRef.name
-                namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
-                key = oxrSpec.parameters.upbound.tokenSecretRef.key
-            }
-        })
+    # Not gated on createGroup. Everything the composition places *inside* the environment
+    # group goes through this ProviderConfig - the ControlPlane above and the SharedAWSSecret
+    # below both name it - and that is just as true when somebody else created the group. Only
+    # the group object itself, and the space-level ProviderConfig that creates it, belong
+    # behind createGroup.
+    _upboundItems += pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
+        # environment group level providerconfig for provider-kubernetes
+        spaceHost = _oxrStatusUpbound.spaceHost
+        org = _oxrStatusUpbound.org
+        group = envGroupName
+        providerConfigName = "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
+        upboundTokenSecretRef = pKubernetesHelper.UpboundTokenSecretRef{
+            name = oxrSpec.parameters.upbound.tokenSecretRef.name
+            namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
+            key = oxrSpec.parameters.upbound.tokenSecretRef.key
+        }
+    })
 
     if oxrSpec.parameters.upbound.createGroup:
         _upboundItems += pKubernetesHelper.upboundProviderConfig(pKubernetesHelper.UpboundProviderConfigInput{
