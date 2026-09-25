@@ -18,27 +18,27 @@ spec:
   - apiVersion: pkg.crossplane.io/v1
     kind: Function
     package: xpkg.upbound.io/crossplane-contrib/function-auto-ready
-    version: v0.7.0
+    version: '>=v0.7.0 <v1.0.0'
   - apiVersion: pkg.crossplane.io/v1
     kind: Provider
     package: xpkg.upbound.io/upbound/provider-family-aws
-    version: v2.8.1
+    version: '>=v2.8.1 <v3.0.0'
   - apiVersion: pkg.crossplane.io/v1
     kind: Provider
     package: xpkg.upbound.io/upbound/provider-aws-iam
-    version: v2.8.1
+    version: '>=v2.8.1 <v3.0.0'
   - apiVersion: pkg.crossplane.io/v1
     kind: Provider
     package: xpkg.upbound.io/upbound/provider-aws-secretsmanager
-    version: v2.8.1
+    version: '>=v2.8.1 <v3.0.0'
   - apiVersion: pkg.crossplane.io/v1
     kind: Provider
     package: xpkg.upbound.io/upbound/provider-kubernetes
-    version: v1.3.3
+    version: '>=v1.3.3 <v2.0.0'
   - apiVersion: pkg.crossplane.io/v1
     kind: Provider
     package: xpkg.upbound.io/upbound/provider-upbound
-    version: v1.1.1
+    version: '>=v1.1.1 <v2.0.0'
   description: |
     platform-ref-upbound enables declarative bootstrapping of Upbound Spaces
     environments with Cloud Provider integration through a GitOps approach.
