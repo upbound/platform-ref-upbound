@@ -68,7 +68,7 @@ parsing its server URL. That is why step 4 below matters, and why the XR briefly
 
 | | |
 |---|---|
-| Upbound | An [account](https://www.upbound.io/register/a) with permission to create groups and control planes |
+| Upbound | An [account](https://www.upbound.io/register/a) whose token can **create groups** — see [Identity](#identity) |
 | AWS | An account, and credentials or a web-identity role — see [AWS credentials](#aws-credentials) |
 | Crossplane | **v2.0+** on the bootstrap control plane |
 | CLI | [`up`](https://docs.upbound.io/cli/) and `kubectl` |
@@ -105,6 +105,44 @@ up token create platform-ref-upbound -f token.json
 
 Or via the console: **My Account → API Tokens → Create New Token**. Only the token value is
 needed; the Access ID is not used.
+
+#### Identity
+
+This token is what the composition authenticates as when it talks to the Spaces API, so its
+permissions decide what an `Environment` can do.
+
+Upbound grants RBAC **per group**: a team is bound to one group through an `ObjectRoleBinding`,
+and there is no permission that means "create any group". An `Environment` creates a *new* group
+`<bootstrapGroup>-<name>` and then manages a control plane inside it, so by default it needs an
+**organization owner or admin** — a personal access token, as created above. A token belonging
+to a team-scoped robot will create nothing and every composed resource inside the group comes
+back `forbidden`.
+
+If you would rather not give CI an owner-level credential, pre-create the group and bind your
+team to it, then set `upbound.createGroup: false` on the `Environment`:
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-group-production          # <bootstrapGroup>-<environment name>
+---
+apiVersion: authorization.spaces.upbound.io/v1alpha1
+kind: ObjectRoleBinding
+metadata:
+  name: my-group-production-admin-binding
+  namespace: my-group-production
+spec:
+  object: {apiGroup: core, resource: namespaces, name: my-group-production}
+  subjects:
+    - kind: UpboundTeam
+      name: <team UUID>              # up team list
+      role: admin
+```
+
+The binding lives inside the group, so the two are created and deleted together. Everything the
+environment places *inside* the group works unchanged. This is how this repository's own e2e
+suite runs.
 
 ### 3. Store the token and a kubeconfig on the control plane
 
@@ -296,7 +334,8 @@ Creates an Upbound Spaces environment and its AWS integration.
 | `upbound.initKubeconfigSecretRef` | **Required.** Bootstrap kubeconfig secret; parsed to derive Space host, org, group and control plane |
 | `upbound.tokenSecretRef` | **Required.** Upbound token secret |
 | `upbound.initProviderConfigName` | ProviderConfig used to observe the bootstrap secret. Default `bootstrap-ctp` |
-| `upbound.createGroup` / `createCtp` | Create the environment group and control plane. Default `true` |
+| `upbound.createGroup` | Create the environment group. Default `true`. Set `false` to deploy into a group that already exists — see [Identity](#identity) |
+| `upbound.createCtp` | Create the environment control plane. Default `true` |
 | `upbound.createArgoSecret` | Write the Argo CD cluster registration. Default `true` |
 | `upbound.teamWithRobot` | Create a Team, Robot, RobotToken, membership and an admin role binding on the group |
 | `upbound.secretSync` | Copy secrets from the bootstrap control plane into the environment |
@@ -465,6 +504,13 @@ The e2e suite reads `UP_API_TOKEN`, `UP_ORG` and `UP_GROUP` — the names
 at generation rather than after a control plane has been provisioned. `UP_SPACE` is optional
 and defaults to the space the workflow switches to; the Spaces API host is derived from it.
 
+It also expects the group `${UP_GROUP}-e2e` and an `ObjectRoleBinding` granting the CI robot's
+team admin on it to exist already, and runs with `createGroup: false` — CI authenticates as a
+team-scoped robot, which cannot create groups. The two manifests are under
+[Identity](#identity). They are provisioned once and outlive any single run: teardown removes
+the control plane, secret stores and AWS resources but leaves the group standing, so the next
+run starts from the same place.
+
 > `spec.timeoutSeconds` does **not** reach uptest's per-resource assertion, which defaults to
 > 30 seconds. The `uptest.upbound.io/timeout` annotation on the XR is what overrides it, and it
 > has to outlast *provider installation* rather than just provisioning — asserting begins once
@@ -477,6 +523,7 @@ and defaults to the space the workflow switches to; the Spaces API host is deriv
 | `tests/test-environment-deletion-policy-delete` | `deletionPolicy: Delete` → `managementPolicies: ["*"]` |
 | `tests/test-environment-no-cloudprovider-resource` | environment with no AWS resources |
 | `tests/test-environment-uninitialized` | first reconcile, before `status.upbound` exists |
+| `tests/test-environment-existing-group` | `createGroup: false` still composes the group-level ProviderConfig |
 | `tests/test-sharedawssecret*` | secret integration, name overrides, truncation, omitted blocks |
 | `tests/test-upboundreposet*` | repository and permission generation |
 

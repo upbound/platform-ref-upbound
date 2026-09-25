@@ -222,6 +222,25 @@ _items = [
                         upbound = {
                             initKubeconfigSecretRef = {name = "bootstrap-kubeconfig", namespace = "default"}
                             tokenSecretRef = {name = "bootstrap-token", namespace = "default"}
+                            # Deploy into a group that already exists, rather than creating one.
+                            #
+                            # Upbound grants RBAC per group: a team is bound to one group with an
+                            # ObjectRoleBinding, and nothing grants "create any group" short of an
+                            # organization owner. CI authenticates as a team-scoped robot, so it
+                            # cannot create the <UP_GROUP>-e2e group this environment would
+                            # otherwise provision - every Object landing inside it came back
+                            # `forbidden`.
+                            #
+                            # So the group and its ObjectRoleBinding are provisioned once, by
+                            # hand, and outlive any single run: teardown removes the control
+                            # plane, the secret stores and the AWS resources, but leaves the group
+                            # (and therefore the binding, which lives inside it) in place. See the
+                            # e2e prerequisites in README.md for the two manifests.
+                            #
+                            # What this costs in coverage: the Namespace Object and the
+                            # space-level ProviderConfig that applies it. Everything the
+                            # environment puts *inside* the group is still exercised.
+                            createGroup = False
                             # No Argo CD on an ephemeral control plane, and the registration
                             # Secret targets an `argocd` namespace that will not exist.
                             createArgoSecret = False
