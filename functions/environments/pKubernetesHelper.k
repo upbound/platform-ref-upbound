@@ -30,6 +30,10 @@ schema UpboundProviderConfigInput:
     # should be set when neither group nor ctp is set
     prefix?: str    # Optional: Prefix for space-level access (when no group/ctp provided)
     providerConfigName: str  # Name of the provider config to reference
+    # Namespace on the bootstrap control plane for the kubeconfig Secret - the XR's own.
+    # A shared `default` would make same-named Environments in different namespaces
+    # overwrite each other's credentials.
+    secretNamespace: str
     upboundTokenSecretRef: UpboundTokenSecretRef        # Reference to the Upbound authentication token
 
 # Helper for generating a controlplane, space or group-level kubeconfig for provider-kubernetes on upbound
@@ -152,7 +156,7 @@ upboundProviderConfig = lambda config: UpboundProviderConfigInput -> any {
                         kind = "Secret"
                         metadata = {
                             name = "{}-kubeconfig".format(configName(config.group, config.ctp, config.prefix))
-                            namespace = "default"
+                            namespace = config.secretNamespace
                         }
                         # `data` with base64, not `stringData`. provider-kubernetes applies
                         # server-side and records field ownership for what it wrote; because
@@ -187,7 +191,7 @@ upboundProviderConfig = lambda config: UpboundProviderConfigInput -> any {
                     source = "Secret"
                     secretRef = {
                         name = "{}-kubeconfig".format(configName(config.group, config.ctp, config.prefix))
-                        namespace = "default"
+                        namespace = config.secretNamespace
                         key = "kubeconfig"
                     }
                 }

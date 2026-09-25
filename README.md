@@ -113,7 +113,7 @@ permissions decide what an `Environment` can do.
 
 Upbound grants RBAC **per group**: a team is bound to one group through an `ObjectRoleBinding`,
 and there is no permission that means "create any group". An `Environment` creates a *new* group
-`<bootstrapGroup>-<name>` and then manages a control plane inside it, so by default it needs an
+`<bootstrapGroup>-<namespace>-<name>` and then manages a control plane inside it, so by default it needs an
 **organization owner or admin** — a personal access token, as created above. A token belonging
 to a team-scoped robot will create nothing and every composed resource inside the group comes
 back `forbidden`.
@@ -125,15 +125,15 @@ team to it, then set `upbound.createGroup: false` on the `Environment`:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: my-group-production          # <bootstrapGroup>-<environment name>
+  name: my-group-default-production  # <bootstrapGroup>-<namespace>-<name>
 ---
 apiVersion: authorization.spaces.upbound.io/v1alpha1
 kind: ObjectRoleBinding
 metadata:
-  name: my-group-production-admin-binding
-  namespace: my-group-production
+  name: my-group-default-production-admin-binding
+  namespace: my-group-default-production
 spec:
-  object: {apiGroup: core, resource: namespaces, name: my-group-production}
+  object: {apiGroup: core, resource: namespaces, name: my-group-default-production}
   subjects:
     - kind: UpboundTeam
       name: <team UUID>              # up team list
@@ -340,6 +340,13 @@ Creates an Upbound Spaces environment and its AWS integration.
 | `upbound.teamWithRobot` | Create a Team, Robot, RobotToken, membership and an admin role binding on the group |
 | `upbound.secretSync` | Copy secrets from the bootstrap control plane into the environment |
 
+Names outside the XR's namespace include it, so `team-a/prod` and `team-b/prod` never
+collide. The group is `<bootstrapGroup>-<namespace>-<name>`, and the Team, Robot, Argo secret
+and every AWS name derive from it. The control plane inside the group keeps the plain
+`<name>`. AWS IAM role names longer than 64 characters are shortened with a hash, keeping the
+`-admin` suffix. Kubeconfig Secrets on the bootstrap control plane are written into the XR's
+namespace.
+
 `status.upbound` reports the values derived from the bootstrap kubeconfig: `spaceHost`,
 `org`, `bootstrapGroup`, `bootstrapCtp`.
 
@@ -514,7 +521,7 @@ The e2e suite reads `UP_API_TOKEN`, `UP_ORG` and `UP_GROUP` — the names
 at generation rather than after a control plane has been provisioned. `UP_SPACE` is optional
 and defaults to the space the workflow switches to; the Spaces API host is derived from it.
 
-It also expects the group `${UP_GROUP}-e2e` and an `ObjectRoleBinding` granting the CI robot's
+It also expects the group `${UP_GROUP}-default-e2e` and an `ObjectRoleBinding` granting the CI robot's
 team admin on it to exist already, and runs with `createGroup: false` — CI authenticates as a
 team-scoped robot, which cannot create groups. The two manifests are under
 [Identity](#identity). They are provisioned once and outlive any single run: teardown removes
@@ -533,6 +540,7 @@ run starts from the same place.
 | `tests/test-environment-deletion-policy-delete` | `deletionPolicy: Delete` → `managementPolicies: ["*"]` |
 | `tests/test-environment-no-cloudprovider-resource` | environment with no AWS resources |
 | `tests/test-environment-uninitialized` | first reconcile, before `status.upbound` exists |
+| `tests/test-environment-namespaced-names` | derived names include the namespace; Role names truncate at 64 |
 | `tests/test-environment-existing-group` | `createGroup: false` still composes the group-level ProviderConfig |
 | `tests/test-environment-secretsmanager-recovery-window` | `recoveryWindowInDays` reaches the nested `SharedAWSSecret` |
 | `tests/test-sharedawssecret*` | secret integration, name overrides, truncation, omitted blocks |

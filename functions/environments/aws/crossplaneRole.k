@@ -41,7 +41,8 @@ getXPRoleItems = lambda awsParams: AWSXPRoleInput -> [any] {
     [
     iamv1beta1.Role {
         metadata = utils._metadata("iamAdminRole") | {
-            name = "{}-admin".format(awsParams.namePrefix)
+            # metadata.name is the role's AWS name, and IAM caps it at 64 characters.
+            name = utils._truncateIamName("{}-admin".format(awsParams.namePrefix), "-admin")
         }
         spec = {
             managementPolicies = utils._managementPolicies(awsParams.deletionPolicy)
@@ -73,7 +74,7 @@ getXPRoleItems = lambda awsParams: AWSXPRoleInput -> [any] {
     }
     iamv1beta1.RolePolicyAttachment {
         metadata = utils._metadata("iamAdminRoleAttach") | {
-            name = "{}-admin".format(awsParams.namePrefix)
+            name = utils._truncateIamName("{}-admin".format(awsParams.namePrefix), "-admin")
         }
         spec = {
             managementPolicies = utils._managementPolicies(awsParams.deletionPolicy)

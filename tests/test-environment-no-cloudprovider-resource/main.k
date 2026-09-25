@@ -24,7 +24,7 @@ _items = [
                                     namespace: "default"
                                 }
                                 data : {
-                                    kubeconfig : base64.encode("{'apiVersion': 'v1', 'clusters': [{'cluster': {'insecure-skip-tls-verify': True, 'server': 'https://upbound-aws-us-east-1.space.mxe.upbound.io/apis/spaces.upbound.io/v1beta1/namespaces/solutions-non-prod-example/controlplanes/example/k8s'}, 'name': 'upbound'}], 'contexts': [{'context': {'cluster': 'upbound', 'extensions': [{'extension': {'apiVersion': 'upbound.io/v1alpha1', 'kind': 'SpaceExtension', 'spec': {'cloud': {'organization': 'upbound'}}}, 'name': 'spaces.upbound.io/space'}], 'namespace': 'default', 'user': 'upbound'}, 'name': 'upbound'}], 'current-context': 'upbound', 'kind': 'Config', 'preferences': {}, 'users': [{'name': 'upbound', 'user': {'exec': {'apiVersion': 'client.authentication.k8s.io/v1', 'args': [organization, token], 'command': 'up', 'env': [{'name': 'ORGANIZATION', 'value': 'upbound'}, {'name': 'UP_PROFILE', 'value': 'default'}], 'interactiveMode': 'IfAvailable', 'provideClusterInfo': False}}}]}")
+                                    kubeconfig : base64.encode("{'apiVersion': 'v1', 'clusters': [{'cluster': {'insecure-skip-tls-verify': True, 'server': 'https://upbound-aws-us-east-1.space.mxe.upbound.io/apis/spaces.upbound.io/v1beta1/namespaces/solutions-non-prod-default-example/controlplanes/example/k8s'}, 'name': 'upbound'}], 'contexts': [{'context': {'cluster': 'upbound', 'extensions': [{'extension': {'apiVersion': 'upbound.io/v1alpha1', 'kind': 'SpaceExtension', 'spec': {'cloud': {'organization': 'upbound'}}}, 'name': 'spaces.upbound.io/space'}], 'namespace': 'default', 'user': 'upbound'}, 'name': 'upbound'}], 'current-context': 'upbound', 'kind': 'Config', 'preferences': {}, 'users': [{'name': 'upbound', 'user': {'exec': {'apiVersion': 'client.authentication.k8s.io/v1', 'args': [organization, token], 'command': 'up', 'env': [{'name': 'ORGANIZATION', 'value': 'upbound'}, {'name': 'UP_PROFILE', 'value': 'default'}], 'interactiveMode': 'IfAvailable', 'provideClusterInfo': False}}}]}")
                                 }
                             }
                         }
@@ -50,7 +50,7 @@ _items = [
                                 kind: "ControlPlane"
                                 metadata: {
                                     name: "example"
-                                    namespace: "solutions-non-prod-example"
+                                    namespace: "solutions-non-prod-default-example"
                                 }
                                 spec: {
                                     class: "default"
@@ -67,7 +67,7 @@ _items = [
                 }
                 kubernetesm.Object{
                     metadata = {
-                        name = "solutions-non-prod-example-group-kubeconfig"
+                        name = "solutions-non-prod-default-example-group-kubeconfig"
                     }
                     spec = {
                         forProvider = {
@@ -75,11 +75,11 @@ _items = [
                                 apiVersion = "v1"
                                 kind = "Secret"
                                 metadata = {
-                                    name = "solutions-non-prod-example-group-kubeconfig"
+                                    name = "solutions-non-prod-default-example-group-kubeconfig"
                                     namespace = "default"
                                 }
                                 data = {
-                                    kubeconfig = base64.encode("{'apiVersion': 'v1', 'clusters': [{'cluster': {'insecure-skip-tls-verify': True, 'server': 'https://upbound-aws-us-east-1.space.mxe.upbound.io'}, 'name': 'upbound'}], 'contexts': [{'context': {'cluster': 'upbound', 'extensions': [{'extension': {'apiVersion': 'upbound.io/v1alpha1', 'kind': 'SpaceExtension', 'spec': {'cloud': {'organization': 'upbound'}}}, 'name': 'spaces.upbound.io/space'}], 'namespace': 'solutions-non-prod-example', 'user': 'upbound'}, 'name': 'upbound'}], 'current-context': 'upbound', 'kind': 'Config', 'preferences': {}, 'users': [{'name': 'upbound', 'user': {'exec': {'apiVersion': 'client.authentication.k8s.io/v1', 'args': [organization, token], 'command': 'up', 'env': [{'name': 'ORGANIZATION', 'value': 'upbound'}, {'name': 'UP_PROFILE', 'value': 'default'}], 'interactiveMode': 'IfAvailable', 'provideClusterInfo': False}}}]}")
+                                    kubeconfig = base64.encode("{'apiVersion': 'v1', 'clusters': [{'cluster': {'insecure-skip-tls-verify': True, 'server': 'https://upbound-aws-us-east-1.space.mxe.upbound.io'}, 'name': 'upbound'}], 'contexts': [{'context': {'cluster': 'upbound', 'extensions': [{'extension': {'apiVersion': 'upbound.io/v1alpha1', 'kind': 'SpaceExtension', 'spec': {'cloud': {'organization': 'upbound'}}}, 'name': 'spaces.upbound.io/space'}], 'namespace': 'solutions-non-prod-default-example', 'user': 'upbound'}, 'name': 'upbound'}], 'current-context': 'upbound', 'kind': 'Config', 'preferences': {}, 'users': [{'name': 'upbound', 'user': {'exec': {'apiVersion': 'client.authentication.k8s.io/v1', 'args': [organization, token], 'command': 'up', 'env': [{'name': 'ORGANIZATION', 'value': 'upbound'}, {'name': 'UP_PROFILE', 'value': 'default'}], 'interactiveMode': 'IfAvailable', 'provideClusterInfo': False}}}]}")
                                 }
                             }
                         }
@@ -117,13 +117,13 @@ _items = [
                 }
                kubernetesm.ProviderConfig{
                     metadata = {
-                        name = "solutions-non-prod-example-group"
+                        name = "solutions-non-prod-default-example-group"
                     }
                     spec = {
                         credentials = {
                             secretRef = {
                                 key = "kubeconfig"
-                                name = "solutions-non-prod-example-group-kubeconfig"
+                                name = "solutions-non-prod-default-example-group-kubeconfig"
                                 namespace = "default"
                             }
                             source = "Secret"
@@ -167,7 +167,7 @@ _items = [
                     apiVersion = "protection.crossplane.io/v1beta1"
                     kind = "Usage"
                     metadata = {
-                        name = "solutions-non-prod-example-group-kubeconfig"
+                        name = "solutions-non-prod-default-example-group-kubeconfig"
                     }
                     spec = {
                         replayDeletion = True
@@ -175,14 +175,14 @@ _items = [
                             apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
                             kind = "Object"
                             resourceRef = {
-                                name = "solutions-non-prod-example-group-kubeconfig"
+                                name = "solutions-non-prod-default-example-group-kubeconfig"
                             }
                         }
                         by = {
                             apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
                             kind = "ProviderConfig"
                             resourceRef = {
-                                name = "solutions-non-prod-example-group"
+                                name = "solutions-non-prod-default-example-group"
                             }
                         }
                     }
@@ -309,7 +309,7 @@ _items = [
                         labels = {
                             "crossplane.io/composite" = "example"
                         }
-                        name = "solutions-non-prod-example"
+                        name = "solutions-non-prod-default-example"
 
                         namespace = "default"
                     }
@@ -336,19 +336,19 @@ _items = [
                         labels = {
                             "crossplane.io/composite" = "example"
                         }
-                        name = "solutions-non-prod-example-team"
+                        name = "solutions-non-prod-default-example-team"
 
                         namespace = "default"
                     }
                     spec = {
                         forProvider = {
-                            name = "solutions-non-prod-example"
+                            name = "solutions-non-prod-default-example"
                             organizationName = "upbound"
                         }
                         managementPolicies = ["*"]
                         providerConfigRef = {
                             kind = "ProviderConfig"
-                            name = "solutions-non-prod-example"
+                            name = "solutions-non-prod-default-example"
                         }
                     }
                 }
@@ -363,16 +363,16 @@ _items = [
                         labels = {
                             "crossplane.io/composite" = "example"
                         }
-                        name = "solutions-non-prod-example-robot-token"
+                        name = "solutions-non-prod-default-example-robot-token"
 
                         namespace = "default"
                     }
                     spec = {
                         forProvider = {
-                            name = "solutions-non-prod-example"
+                            name = "solutions-non-prod-default-example"
                             owner = {
                                 idRef = {
-                                    name = "solutions-non-prod-example-robot"
+                                    name = "solutions-non-prod-default-example-robot"
 
                                     namespace = "default"
                                 }
@@ -382,10 +382,10 @@ _items = [
                         managementPolicies = ["*"]
                         providerConfigRef = {
                             kind = "ProviderConfig"
-                            name = "solutions-non-prod-example"
+                            name = "solutions-non-prod-default-example"
                         }
                         writeConnectionSecretToRef = {
-                            name = "solutions-non-prod-example-robot-token"
+                            name = "solutions-non-prod-default-example-robot-token"
                         }
                     }
                 }
@@ -400,14 +400,14 @@ _items = [
                         labels = {
                             "crossplane.io/composite" = "example"
                         }
-                        name = "solutions-non-prod-example-robot"
+                        name = "solutions-non-prod-default-example-robot"
 
                         namespace = "default"
                     }
                     spec = {
                         forProvider = {
-                            description = "Robot for solutions-non-prod-example"
-                            name = "solutions-non-prod-example-bot"
+                            description = "Robot for solutions-non-prod-default-example"
+                            name = "solutions-non-prod-default-example-bot"
                             owner = {
                                 name = "upbound"
 
@@ -417,7 +417,7 @@ _items = [
                         managementPolicies = ["*"]
                         providerConfigRef = {
                             kind = "ProviderConfig"
-                            name = "solutions-non-prod-example"
+                            name = "solutions-non-prod-default-example"
                         }
                     }
                 }
@@ -432,19 +432,19 @@ _items = [
                         labels = {
                             "crossplane.io/composite" = "example"
                         }
-                        name = "solutions-non-prod-example-robot-team-membership"
+                        name = "solutions-non-prod-default-example-robot-team-membership"
 
                         namespace = "default"
                     }
                     spec = {
                         forProvider = {
                             robotIdRef = {
-                                name = "solutions-non-prod-example-robot"
+                                name = "solutions-non-prod-default-example-robot"
 
                                 namespace = "default"
                             }
                             teamIdRef = {
-                                name = "solutions-non-prod-example-team"
+                                name = "solutions-non-prod-default-example-team"
 
                                 namespace = "default"
                             }
@@ -452,7 +452,7 @@ _items = [
                         managementPolicies = ["*"]
                         providerConfigRef = {
                             kind = "ProviderConfig"
-                            name = "solutions-non-prod-example"
+                            name = "solutions-non-prod-default-example"
                         }
                     }
                 }
@@ -465,7 +465,7 @@ _items = [
                         labels = {
                             "crossplane.io/composite" = "example"
                         }
-                        name = "solutions-non-prod-example-rt-secret"
+                        name = "solutions-non-prod-default-example-rt-secret"
 
                         namespace = "default"
                     }
@@ -490,7 +490,7 @@ _items = [
                                     apiVersion = "v1"
                                     fieldPath = "data.token"
                                     kind = "Secret"
-                                    name = "solutions-non-prod-example-robot-token"
+                                    name = "solutions-non-prod-default-example-robot-token"
                                 }
                                 toFieldPath = "data.token"
                             }

@@ -154,8 +154,14 @@ if _initReady:
     # - AWS IAM role setup for cross-service authentication
     # - Secret stores and external secrets for configuration
 
-    # Every environment consists of a group containing a single controlplane, this is the name of that group
-    envGroupName = "{}-{}".format(_oxrStatusUpbound.bootstrapGroup, oxrMeta.name)
+    # Every environment consists of a group containing a single controlplane, this is the name of that group.
+    #
+    # The namespace is part of it. The XRD is Namespaced, so team-a/prod and team-b/prod are
+    # both valid - and the group is org-wide, as is everything named after it: the Team,
+    # Robot and Argo secret, and every AWS name via awsNamePrefix. Built from metadata.name
+    # alone, those two XRs would share all of it, and with deletionPolicy: Delete deleting
+    # either would tear down the other's environment.
+    envGroupName = "{}-{}-{}".format(_oxrStatusUpbound.bootstrapGroup, oxrMeta.namespace, oxrMeta.name)
     awsNamePrefix = "{}-{}-{}".format(_oxrStatusUpbound.org, envGroupName, oxrMeta.name)
 
     _upboundItems = [
@@ -256,6 +262,7 @@ if _initReady:
             group = envGroupName
             ctp = oxrMeta.name
             providerConfigName = "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
+            secretNamespace = oxrMeta.namespace
             upboundTokenSecretRef = pKubernetesHelper.UpboundTokenSecretRef{
                 name = oxrSpec.parameters.upbound.tokenSecretRef.name
                 namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
@@ -274,6 +281,7 @@ if _initReady:
         org = _oxrStatusUpbound.org
         group = envGroupName
         providerConfigName = "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
+        secretNamespace = oxrMeta.namespace
         upboundTokenSecretRef = pKubernetesHelper.UpboundTokenSecretRef{
             name = oxrSpec.parameters.upbound.tokenSecretRef.name
             namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace
@@ -288,6 +296,7 @@ if _initReady:
             org = _oxrStatusUpbound.org
             prefix = oxrMeta.name
             providerConfigName = "{}-ctp".format(_oxrStatusUpbound.bootstrapCtp)
+            secretNamespace = oxrMeta.namespace
             upboundTokenSecretRef = pKubernetesHelper.UpboundTokenSecretRef{
                 name = oxrSpec.parameters.upbound.tokenSecretRef.name
                 namespace = oxrSpec.parameters.upbound.tokenSecretRef.namespace

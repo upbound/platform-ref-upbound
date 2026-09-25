@@ -56,18 +56,18 @@ _items = [
                 # The group-level ProviderConfig and its kubeconfig Secret must still be
                 # composed. Without them the two resources below reference nothing.
                 kubernetesm.ProviderConfig{
-                    metadata.name = "solutions-non-prod-example-group"
+                    metadata.name = "solutions-non-prod-default-example-group"
                     spec.credentials = {
                         source = "Secret"
                         secretRef = {
-                            name = "solutions-non-prod-example-group-kubeconfig"
+                            name = "solutions-non-prod-default-example-group-kubeconfig"
                             namespace = "default"
                             key = "kubeconfig"
                         }
                     }
                 }
                 kubernetesm.Object{
-                    metadata.name = "solutions-non-prod-example-group-kubeconfig"
+                    metadata.name = "solutions-non-prod-default-example-group-kubeconfig"
                     spec = {
                         forProvider.manifest = {}
                     }
@@ -76,10 +76,10 @@ _items = [
                 kubernetesm.Object{
                     metadata.name = "example-ctp"
                     spec = {
-                        forProvider.manifest.metadata.namespace = "solutions-non-prod-example"
+                        forProvider.manifest.metadata.namespace = "solutions-non-prod-default-example"
                         providerConfigRef = {
                             kind = "ProviderConfig"
-                            name = "solutions-non-prod-example-group"
+                            name = "solutions-non-prod-default-example-group"
                         }
                     }
                 }
@@ -87,9 +87,9 @@ _items = [
                 sav1.SharedAWSSecret{
                     metadata.name = "example-shared-secret"
                     spec.parameters.upbound = {
-                        group = "solutions-non-prod-example"
+                        group = "solutions-non-prod-default-example"
                         controlPlane = "example"
-                        providerConfigRef.name = "solutions-non-prod-example-group"
+                        providerConfigRef.name = "solutions-non-prod-default-example-group"
                     }
                 }
             ]

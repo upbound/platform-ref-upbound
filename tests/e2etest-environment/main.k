@@ -237,7 +237,7 @@ _items = [
                             # Upbound grants RBAC per group: a team is bound to one group with an
                             # ObjectRoleBinding, and nothing grants "create any group" short of an
                             # organization owner. CI authenticates as a team-scoped robot, so it
-                            # cannot create the <UP_GROUP>-e2e group this environment would
+                            # cannot create the <UP_GROUP>-<namespace>-e2e group this environment would
                             # otherwise provision - every Object landing inside it came back
                             # `forbidden`.
                             #

@@ -36,7 +36,7 @@ _items = [
                 }
                 kubernetesm.Object{
                     metadata = {
-                        name = "solutions-non-prod-example-group-kubeconfig"
+                        name = "solutions-non-prod-default-example-group-kubeconfig"
                     }
                     spec = {
                         forProvider.manifest = {}
@@ -46,7 +46,7 @@ _items = [
                 ### AWS ###
                 iamv1beta1.Role{
                     metadata = {
-                        name = "upbound-solutions-non-prod-example-example-admin"
+                        name = "upbound-solutions-non-prod-default-example-example-admin"
                     }
                     spec = {
                         forProvider = {}
@@ -55,7 +55,7 @@ _items = [
                 }
                 iamv1beta1.RolePolicyAttachment{
                     metadata = {
-                        name = "upbound-solutions-non-prod-example-example-admin"
+                        name = "upbound-solutions-non-prod-default-example-example-admin"
                     }
                     spec = {
                         forProvider = {}
@@ -72,16 +72,16 @@ _items = [
                             aws = {
                                 accountId = "12345678912"
                                 region = "us-east-1"
-                                namePrefix = "upbound-solutions-non-prod-example-example"
+                                namePrefix = "upbound-solutions-non-prod-default-example-example"
                                 providerConfigRef = {
-                                    name = "solutions-non-prod-example"
+                                    name = "solutions-non-prod-default-example"
                                 }
                             }
                             upbound = {
-                                group = "solutions-non-prod-example"
+                                group = "solutions-non-prod-default-example"
                                 controlPlane = "example"
                                 providerConfigRef = {
-                                    name = "solutions-non-prod-example-group"
+                                    name = "solutions-non-prod-default-example-group"
                                 }
                             }
                         }
@@ -89,7 +89,7 @@ _items = [
                 }
                 iamv1beta1.OpenIDConnectProvider{
                     metadata = {
-                        name = "upbound-solutions-non-prod-example-example-oidc-provider"
+                        name = "upbound-solutions-non-prod-default-example-example-oidc-provider"
                     }
                     spec = {
                         forProvider = {}
@@ -146,7 +146,7 @@ _items = [
             assertResources = [
                 iamv1beta1.OpenIDConnectProvider{
                     metadata = {
-                        name = "upbound-solutions-non-prod-example-example-oidc-provider"
+                        name = "upbound-solutions-non-prod-default-example-example-oidc-provider"
                         annotations = {
                             "crossplane.io/external-name" = "arn:aws:iam::12345678912:oidc-provider/proidc.upbound.io"
                         }
@@ -157,7 +157,7 @@ _items = [
                     }
                 }
                 iamv1beta1.Role{
-                    metadata.name = "upbound-solutions-non-prod-example-example-admin"
+                    metadata.name = "upbound-solutions-non-prod-default-example-example-admin"
                     spec = {
                         forProvider = {}
                         managementPolicies = ["*"]
