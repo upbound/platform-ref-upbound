@@ -505,11 +505,36 @@ delete the repository or its published packages.
 
 ## Development
 
+The composition functions and the tests are Python, on the
+[function SDK](https://github.com/crossplane/function-sdk-python). Each function is a
+`FunctionRunner` in `functions/<name>/function/fn.py`; each test is a module under
+`tests/<name>/test/` that prints its `CompositionTest` (or `E2ETest`) as YAML.
+
 ```bash
-up project build
+up project build                   # also generates the Python models under .up/python
 up test run "tests/test-*"         # composition tests
 up test run "tests/*" --e2e        # end-to-end, against a real control plane
 ```
+
+Functions and tests run in containers, so none of this needs Python on your machine. An
+editor does: without the generated models and the SDK on its interpreter path, every
+`from models.io...` import shows as unresolved on correct code. Build a venv once, after the
+first `up project build`, from the project's own pins:
+
+```bash
+python3.13 -m venv .venv && .venv/bin/pip install --upgrade pip
+# The functions' pins cover the tests too (SDK, pydantic, PyYAML). The `cd` matters: pip
+# resolves each pyproject's relative path to .up/python from the current directory.
+for d in functions/*; do (cd "$d" && ../../.venv/bin/pip install -q -e .); done
+.venv/bin/pip install -e .up/python    # last, and editable, so regenerated models need no reinstall
+```
+
+> Function directory names are the published package paths
+> (`xpkg.upbound.io/<org>/platform-ref-upbound_<name>`) — renaming one publishes a new package.
+
+> CI builds functions one at a time (`UP_MAX_CONCURRENCY=1`). Every Python function build
+> mounts the same pip-cache Docker volume, and on a fresh runner concurrent builds race creating
+> its directories.
 
 > The composition glob is `tests/test-*`, not `tests/*`. `up test run` generates manifests for
 > every directory it matches, even ones it will not execute, and `tests/e2etest-environment`
