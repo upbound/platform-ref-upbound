@@ -10,6 +10,11 @@ on:
       - labeled
 
 env:
+  # Build functions one at a time. Every Python function build mounts the same
+  # up-python-sdk-pip-cache Docker volume, and on a fresh runner - where that volume starts
+  # empty - concurrent builds race creating its directories and fail with
+  # "mkdir ...: file exists".
+  UP_MAX_CONCURRENCY: "1"
   UP_API_TOKEN: ${{ secrets.UP_E2E_API_TOKEN || secrets.UP_API_TOKEN }}
   UP_ORG: ${{ secrets.UP_E2E_ORG || secrets.UP_ORG }}
   UP_GROUP: ${{ secrets.UP_E2E_GROUP || secrets.UP_GROUP || 'default' }}

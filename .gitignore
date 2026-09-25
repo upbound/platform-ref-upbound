@@ -2,3 +2,5 @@ _output
 .venv
 .up
 .agents
+.vscode
+__pycache__
