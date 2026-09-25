@@ -1,0 +1,16 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: environments.sa.upbound.io
+spec:
+  compositeTypeRef:
+    apiVersion: sa.upbound.io/v1
+    kind: Environment
+  mode: Pipeline
+  pipeline:
+  - functionRef:
+      name: upbound-platform-ref-upboundenvironments
+    step: compose-environment
+  - functionRef:
+      name: crossplane-contrib-function-auto-ready
+    step: crossplane-contrib-function-auto-ready

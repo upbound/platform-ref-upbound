@@ -1,0 +1,77 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: upboundreposets.sa.upbound.io
+spec:
+  group: sa.upbound.io
+  scope: Namespaced
+  names:
+    categories:
+    - crossplane
+    kind: UpboundRepoSet
+    plural: upboundreposets
+  versions:
+  - name: v1
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        description: UpboundRepoSet is the Schema for the UpboundRepoSet API.
+        properties:
+          spec:
+            description: UpboundRepoSetSpec defines the desired state of UpboundRepoSet.
+            properties:
+              parameters:
+                properties:
+                  organization:
+                    type: string
+                  permissions:
+                    properties:
+                      teams:
+                        additionalProperties:
+                          properties:
+                            permission:
+                              type: string
+                          type: object
+                        type: object
+                    type: object
+                  settings:
+                    type: object
+                    properties:
+                      public:
+                        type: boolean
+                        default: false
+                      publish:
+                        type: boolean
+                        default: false
+                    required:
+                    - public
+                    - publish
+                  repositories:
+                    additionalProperties:
+                      type: object
+                      properties:
+                        public:
+                          type: boolean
+                        publish:
+                          type: boolean
+                    type: object
+                  tokenSecretRef:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                        default: "token"
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                        default: "default"
+                type: object
+            type: object
+          status:
+            description: UpboundRepoSetStatus defines the observed state of UpboundRepoSet.
+            type: object
+        required:
+        - spec
+        type: object
+    served: true

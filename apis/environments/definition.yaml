@@ -1,0 +1,268 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: environments.sa.upbound.io
+spec:
+  group: sa.upbound.io
+  scope: Namespaced
+  names:
+    categories:
+    - crossplane
+    kind: Environment
+    plural: environments
+  versions:
+  - name: v1
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        description: Environment is the Schema for the Environment API.
+        properties:
+          spec:
+            description: EnvironmentSpec defines the desired state of Environment.
+            type: object
+            properties:
+              parameters:
+                description: Configuration parameters for the environment.
+                type: object
+                properties:
+                  deletionPolicy:
+                    description: Determines whether all managed resources will be deleted or orphaned when the Environment is deleted. Options are Delete or Orphan. Default is Orphan.
+                    type: string
+                    enum:
+                    - Delete
+                    - Orphan
+                    default: Orphan
+                  aws:
+                    description: AWS-specific configuration for the environment.
+                    type: object
+                    properties:
+                      accountId:
+                        description: The AWS account ID where resources will be provisioned.
+                        type: string
+                      roleArn:
+                        description: Role ARN of the aws role used to create root-level objects like provider role and shared secret.
+                        type: string
+                      credsSecretRef:
+                        description: Reference to the secret containing AWS credentials.
+                        type: object
+                        properties:
+                          name:
+                            description: The name of the secret containing AWS credentials.
+                            type: string
+                          namespace:
+                            description: The namespace of the secret containing AWS credentials.
+                            type: string
+                      region:
+                        description: The AWS region where resources will be provisioned.
+                        type: string
+                      sharedSecret:
+                        type: object
+                        description: Settings for configuring the shared secret
+                        properties:
+                          secretsManagerSecret:
+                            properties:
+                              arn:
+                                description: ARN of an existing AWS Secrets Manager secret to use instead of creating a new one.
+                                type: string
+                              name:
+                                description: Name of the AWS Secrets Manager secret. If provided, overrides the namePrefix logic for the secret name.
+                                type: string
+                              recoveryWindowInDays:
+                                description: >-
+                                  Days AWS keeps the secret recoverable after deletion: 7-30, or 0 to delete it
+                                  immediately. Defaults to the AWS default of 30. While the window is open the
+                                  secret name stays reserved, so an environment torn down and recreated under the
+                                  same name fails with "already scheduled for deletion" until it expires.
+                                type: integer
+                              create:
+                                description: Whether to create the AWS Secrets Manager secret. Defaults to true. Set to false to skip creation when using an existing secret.
+                                type: boolean
+                                default: true
+                            type: object
+                          externalSecret:
+                            properties:
+                              name:
+                                description: Name for the SharedExternalSecret. If not provided, defaults to control plane name.
+                                type: string
+                              namespace:
+                                description: Namespace where the target secret will be created. Defaults to 'default'.
+                                type: string
+                                default: default
+                              spec:
+                                properties:
+                                  data:
+                                    description: Data specifies how to fetch individual secret values from the external provider.
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        secretKey:
+                                          description: The key in the Kubernetes Secret to store the value.
+                                          type: string
+                                        remoteRef:
+                                          description: Reference to the remote secret in the external provider.
+                                          type: object
+                                          properties:
+                                            key:
+                                              description: Key used in the Provider, mandatory.
+                                              type: string
+                                            property:
+                                              description: Used to select a specific property of the Provider value.
+                                              type: string
+                                            version:
+                                              description: Used to select a specific version of the Provider value.
+                                              type: string
+                                            metadataPolicy:
+                                              description: Policy for fetching metadata.
+                                              type: string
+                                              enum: ["Fetch", "None"]
+                                            conversionStrategy:
+                                              description: Strategy for converting the secret value.
+                                              type: string
+                                              enum: ["Default", "Unicode"]
+                                            decodingStrategy:
+                                              description: Strategy for decoding the secret value.
+                                              type: string
+                                              enum: ["None", "Base64", "Base64URL", "Auto"]
+                                          required: ["key"]
+                                        sourceRef:
+                                          description: Override secret source.
+                                          type: object
+                                          properties:
+                                            generatorRef:
+                                              type: object
+                                              properties:
+                                                apiVersion:
+                                                  type: string
+                                                kind:
+                                                  type: string
+                                                name:
+                                                  type: string
+                                      required: ["secretKey", "remoteRef"]
+                                  target:
+                                    properties:
+                                      template:
+                                        properties:
+                                          data:
+                                            description: Data to add to the target secret template with optional templating expressions.
+                                            type: object
+                                            additionalProperties:
+                                              type: string
+                                          metadata:
+                                            properties:
+                                              labels:
+                                                description: Labels to add to the target secret created by the SharedExternalSecret.
+                                                type: object
+                                                additionalProperties:
+                                                  type: string
+                                            type: object
+                                        type: object
+                                    type: object
+                                type: object
+                            type: object
+                      providerRole:
+                        type: object
+                        description: Settings for the provider-aws role with trust to environment control plane
+                        properties:
+                          oidcProviderArn:
+                            description: ARN of an existing AWS OIDC provider to use instead of creating a new one.
+                            type: string
+                    required:
+                    - accountId
+                    - region
+                  upbound:
+                    type: object
+                    properties:
+                      createGroup:
+                        type: boolean
+                        default: true
+                      createCtp:
+                        type: boolean
+                        default: true
+                      createArgoSecret:
+                        type: boolean
+                        default: true
+                      secretSync:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            sourceRef:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                namespace:
+                                  type: string
+                            destRef:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                namespace:
+                                  type: string
+                      tokenSecretRef:
+                        type: object
+                        properties:
+                          key:
+                            type: string
+                            default: "token"
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                            default: "default"
+                        required:
+                        - name
+                      initKubeconfigSecretRef:
+                        type: object
+                        description: The kubeconfig used to initialize the environment.
+                        properties:
+                          key:
+                            type: string
+                            default: "kubeconfig"
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                            default: "default"
+                        required:
+                        - name
+                      initProviderConfigName:
+                        type: string
+                        default: "bootstrap-ctp"
+                      teamWithRobot:
+                        type: object
+                        properties:
+                          teamNameOverride:
+                            type: string
+                          teamExternalName:
+                            type: string
+                    required:
+                    - initKubeconfigSecretRef
+                    - tokenSecretRef
+
+          status:
+            description: EnvironmentStatus defines the observed state of Environment.
+            type: object
+            properties:
+              upbound:
+                description: Upbound-specific status information.
+                type: object
+                properties:
+                  spaceHost:
+                    description: The hostname of the Upbound Space where this environment is deployed.
+                    type: string
+                  bootstrapGroup:
+                    description: The name of the bootstrap group used in Upbound Space.
+                    type: string
+                  bootstrapCtp:
+                    description: The name of the bootstrap control plane used in Upbound Space.
+                    type: string
+                  org:
+                    description: The Upbound organization name.
+                    type: string
+        required:
+        - spec
+        type: object
+    served: true

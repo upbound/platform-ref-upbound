@@ -1,0 +1,162 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: sharedawssecrets.sa.upbound.io
+spec:
+  group: sa.upbound.io
+  scope: Namespaced
+  names:
+    categories:
+    - crossplane
+    kind: SharedAWSSecret
+    plural: sharedawssecrets
+  versions:
+  - name: v1
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        description: SharedAWSSecret is the Schema for the SharedAWSSecret API.
+        properties:
+          spec:
+            description: SharedAWSSecretSpec defines the desired state of SharedAWSSecret.
+            properties:
+              parameters:
+                properties:
+                  aws:
+                    properties:
+                      accountId:
+                        type: string
+                      region:
+                        type: string
+                      secretsManagerSecret:
+                        properties:
+                          arn:
+                            description: ARN of an existing AWS Secrets Manager secret to use instead of creating a new one.
+                            type: string
+                          name:
+                            description: Name of the AWS Secrets Manager secret. If provided, overrides the namePrefix logic for the secret name.
+                            type: string
+                          recoveryWindowInDays:
+                            description: >-
+                              Days AWS keeps the secret recoverable after deletion: 7-30, or 0 to delete it
+                              immediately. Defaults to the AWS default of 30. While the window is open the
+                              secret name stays reserved, so an environment torn down and recreated under the
+                              same name fails with "already scheduled for deletion" until it expires.
+                            type: integer
+                          create:
+                            description: Whether to create the AWS Secrets Manager secret. Defaults to true. Set to false to skip creation when using an existing secret.
+                            type: boolean
+                            default: true
+                        type: object
+                      namePrefix:
+                        type: string
+                      providerConfigRef:
+                        properties:
+                          name:
+                            type: string
+                        type: object
+                    type: object
+                  deletionPolicy:
+                    type: string
+                  upbound:
+                    properties:
+                      controlPlane:
+                        type: string
+                      group:
+                        type: string
+                      providerConfigRef:
+                        properties:
+                          name:
+                            type: string
+                        type: object
+                    type: object
+                  externalSecret:
+                    properties:
+                      name:
+                        description: Name for the SharedExternalSecret. If not provided, defaults to control plane name.
+                        type: string
+                      namespace:
+                        description: Namespace where the target secret will be created. Defaults to 'default'.
+                        type: string
+                        default: default
+                      spec:
+                        properties:
+                          data:
+                            description: Data specifies how to fetch individual secret values from the external provider.
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                secretKey:
+                                  description: The key in the Kubernetes Secret to store the value.
+                                  type: string
+                                remoteRef:
+                                  description: Reference to the remote secret in the external provider.
+                                  type: object
+                                  properties:
+                                    key:
+                                      description: Key used in the Provider, mandatory.
+                                      type: string
+                                    property:
+                                      description: Used to select a specific property of the Provider value.
+                                      type: string
+                                    version:
+                                      description: Used to select a specific version of the Provider value.
+                                      type: string
+                                    metadataPolicy:
+                                      description: Policy for fetching metadata.
+                                      type: string
+                                      enum: ["Fetch", "None"]
+                                    conversionStrategy:
+                                      description: Strategy for converting the secret value.
+                                      type: string
+                                      enum: ["Default", "Unicode"]
+                                    decodingStrategy:
+                                      description: Strategy for decoding the secret value.
+                                      type: string
+                                      enum: ["None", "Base64", "Base64URL", "Auto"]
+                                  required: ["key"]
+                                sourceRef:
+                                  description: Override secret source.
+                                  type: object
+                                  properties:
+                                    generatorRef:
+                                      type: object
+                                      properties:
+                                        apiVersion:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                              required: ["secretKey", "remoteRef"]
+                          target:
+                            properties:
+                              template:
+                                properties:
+                                  data:
+                                    description: Data to add to the target secret template with optional templating expressions.
+                                    type: object
+                                    additionalProperties:
+                                      type: string
+                                  metadata:
+                                    properties:
+                                      labels:
+                                        description: Labels to add to the target secret created by the SharedExternalSecret.
+                                        type: object
+                                        additionalProperties:
+                                          type: string
+                                    type: object
+                                type: object
+                            type: object
+                        type: object
+                    type: object
+                type: object
+            type: object
+          status:
+            description: SharedAWSSecretStatus defines the observed state of SharedAWSSecret.
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
