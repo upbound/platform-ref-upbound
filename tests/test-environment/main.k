@@ -723,6 +723,56 @@ _items = [
             validate = False
         }
     }
+    # secretsManagerSecret settings have to survive the hop into the nested SharedAWSSecret.
+    # recoveryWindowInDays is the one that bites: 0 is a meaningful value and a falsy one, so a
+    # truthy pass-through test drops it silently and teardown goes back to scheduling the secret
+    # for 30 days - which blocks the next run under the same name.
+    metav1alpha1.CompositionTest{
+        metadata.name: "test-environment-secretsmanager-recovery-window"
+        spec = {
+            assertResources = [
+                sav1.SharedAWSSecret{
+                    metadata.name = "example-shared-secret"
+                    spec.parameters.aws.secretsManagerSecret = {
+                        recoveryWindowInDays = 0
+                    }
+                }
+            ]
+            compositionPath = "apis/environments/composition.yaml"
+            xrdPath = "apis/environments/definition.yaml"
+            xr: sav1.Environment{
+                metadata = {
+                    name = "example"
+                    namespace = "default"
+                }
+                spec.parameters = {
+                    deletionPolicy = "Delete"
+                    aws = {
+                        accountId = "12345678912"
+                        region = "us-east-1"
+                        credsSecretRef = {name = "aws-creds-example", namespace = "default"}
+                        sharedSecret = {
+                            secretsManagerSecret = {
+                                recoveryWindowInDays = 0
+                            }
+                        }
+                    }
+                    upbound = {
+                        initKubeconfigSecretRef = {name = "init-kubeconfig"}
+                        tokenSecretRef = {name = "upbound-token"}
+                    }
+                }
+                status.upbound = {
+                    bootstrapCtp = "bootstrap"
+                    bootstrapGroup = "solutions-non-prod"
+                    org = "upbound"
+                    spaceHost = "upbound-aws-us-east-1.space.mxe.upbound.io"
+                }
+            }
+            timeoutSeconds = 60
+            validate = False
+        }
+    }
 ]
 
 items = _items

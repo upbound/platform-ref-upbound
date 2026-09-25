@@ -55,6 +55,7 @@ secretsManagerSecretName = oxr.spec.parameters.aws.secretsManagerSecret?.name or
 # because the block is optional and an absent one yields None rather than Undefined, so
 # neither a bare `.create` (crashes) nor an `== Undefined` test (silently returns falsy,
 # skipping the secret entirely) is safe here.
+_recoveryWindowInDays = oxr.spec.parameters.aws.secretsManagerSecret?.recoveryWindowInDays
 _smsCreate = oxr.spec.parameters.aws.secretsManagerSecret?.create
 _secretsManagerSecretCreate = False if _smsCreate == False else True
 
@@ -206,6 +207,11 @@ _items = [
                 forProvider = {
                     name = awsSecretName
                     region = region
+                    # Explicit `!= Undefined`, not truthiness: 0 is the value that matters here
+                    # and it is falsy, so a truthy test would silently drop exactly the setting
+                    # anyone bothers to specify.
+                    if _recoveryWindowInDays != Undefined:
+                        recoveryWindowInDays = _recoveryWindowInDays
                     if deletionPolicy == "Delete":
                         forceOverwriteReplicaSecret = True
                 }

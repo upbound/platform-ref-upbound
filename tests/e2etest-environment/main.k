@@ -217,7 +217,17 @@ _items = [
                                 # see test-environment-adopted-oidc-is-orphaned.
                                 oidcProviderArn = "arn:aws:iam::609897127049:oidc-provider/proidc.upbound.io"
                             }
-                            sharedSecret = {}
+                            sharedSecret = {
+                                secretsManagerSecret = {
+                                    # Purge on teardown instead of scheduling. AWS keeps a
+                                    # deleted Secrets Manager secret recoverable for 30 days by
+                                    # default and holds its name reserved the whole time, so the
+                                    # run after a teardown fails with "already scheduled for
+                                    # deletion". A suite has to be re-runnable the minute it
+                                    # finishes, and nothing here is worth recovering.
+                                    recoveryWindowInDays = 0
+                                }
+                            }
                         }
                         upbound = {
                             initKubeconfigSecretRef = {name = "bootstrap-kubeconfig", namespace = "default"}

@@ -373,6 +373,8 @@ if _initReady:
                                         arn = oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret.arn
                                     if oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret?.name:
                                         name = oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret.name
+                                    if oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret?.recoveryWindowInDays != Undefined:
+                                        recoveryWindowInDays = oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret.recoveryWindowInDays
                                     if oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret?.create != Undefined:
                                         create = oxrSpec.parameters.aws.sharedSecret.secretsManagerSecret.create
                                 }

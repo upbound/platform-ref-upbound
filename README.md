@@ -428,6 +428,7 @@ spec:
 | `aws.secretsManagerSecret.name` | Override the default `<namePrefix>-config` secret name |
 | `aws.secretsManagerSecret.create` | `false` to reference an existing secret instead of creating one |
 | `aws.secretsManagerSecret.arn` | Adopt an existing secret by ARN |
+| `aws.secretsManagerSecret.recoveryWindowInDays` | `7`–`30`, or `0` to delete immediately. Defaults to the AWS default of 30 |
 | `externalSecret.namespace` | Namespace the projected secret lands in. Default `default` |
 | `externalSecret.name` | Name of the `SharedExternalSecret`. Defaults to the control plane name |
 | `externalSecret.spec.data` | Per-key extraction, taking precedence over bulk extraction |
@@ -441,6 +442,15 @@ hash for uniqueness:
 very-long-secret-name-that-exceeds-sixty-four-characters-secrets-read
                               -> very-long-secret-name-that-exceeds-12345678-secrets-read
 ```
+
+---
+
+> Deleting a Secrets Manager secret **schedules** it — AWS keeps it recoverable for
+> `recoveryWindowInDays` (30 by default) and reserves the name for that whole period. An
+> environment torn down and recreated under the same name fails with *"You can't create this
+> secret because a secret with this name is already scheduled for deletion"* until the window
+> closes. Set `recoveryWindowInDays: 0` for environments that get rebuilt, and leave the default
+> where the secret is worth recovering.
 
 ---
 
@@ -524,6 +534,7 @@ run starts from the same place.
 | `tests/test-environment-no-cloudprovider-resource` | environment with no AWS resources |
 | `tests/test-environment-uninitialized` | first reconcile, before `status.upbound` exists |
 | `tests/test-environment-existing-group` | `createGroup: false` still composes the group-level ProviderConfig |
+| `tests/test-environment-secretsmanager-recovery-window` | `recoveryWindowInDays` reaches the nested `SharedAWSSecret` |
 | `tests/test-sharedawssecret*` | secret integration, name overrides, truncation, omitted blocks |
 | `tests/test-upboundreposet*` | repository and permission generation |
 

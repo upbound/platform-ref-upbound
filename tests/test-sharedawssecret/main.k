@@ -853,6 +853,59 @@ _items = [
             validate: False
         }
     }
+    # Test case 3b: recoveryWindowInDays reaches the managed resource.
+    #
+    # AWS does not delete a Secrets Manager secret outright - it schedules it, and for the
+    # length of the recovery window (30 days by default) the name stays taken. Recreating a
+    # secret with that name fails with "already scheduled for deletion", so any environment
+    # that is torn down and stood back up under the same name is blocked until the window
+    # expires. Setting 0 deletes immediately with no recovery.
+    metav1alpha1.CompositionTest{
+        metadata.name: "test-sharedawssecret-recovery-window"
+        spec = {
+            assertResources = [
+                secretsmanagerv1beta1.Secret{
+                    metadata.name = "example-env-config-secretsmanager-secret"
+                    spec.forProvider = {
+                        name = "example-env-config"
+                        region = "us-east-1"
+                        recoveryWindowInDays = 0
+                    }
+                }
+            ]
+            compositionPath: "apis/sharedawssecrets/composition.yaml"
+            xr: sav1.SharedAWSSecret{
+                metadata = {
+                    name = "example-shared-secret"
+                    namespace = "default"
+                }
+                spec.parameters = {
+                    deletionPolicy = "Delete"
+                    aws = {
+                        accountId = "123456789012"
+                        region = "us-east-1"
+                        namePrefix = "example-env"
+                        secretsManagerSecret = {
+                            recoveryWindowInDays = 0
+                        }
+                        providerConfigRef = {
+                            name = "example-env"
+                        }
+                    }
+                    upbound = {
+                        group = "example-env"
+                        controlPlane = "example-ctp"
+                        providerConfigRef = {
+                            name = "example-env-group"
+                        }
+                    }
+                }
+            }
+            xrdPath: "apis/sharedawssecrets/definition.yaml"
+            timeoutSeconds: 60
+            validate: False
+        }
+    }
     # Test case 4: Long name that triggers hash truncation
     metav1alpha1.CompositionTest{
         metadata.name: "test-sharedawssecret-long-name"

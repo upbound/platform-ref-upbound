@@ -67,6 +67,13 @@ spec:
                               name:
                                 description: Name of the AWS Secrets Manager secret. If provided, overrides the namePrefix logic for the secret name.
                                 type: string
+                              recoveryWindowInDays:
+                                description: >-
+                                  Days AWS keeps the secret recoverable after deletion: 7-30, or 0 to delete it
+                                  immediately. Defaults to the AWS default of 30. While the window is open the
+                                  secret name stays reserved, so an environment torn down and recreated under the
+                                  same name fails with "already scheduled for deletion" until it expires.
+                                type: integer
                               create:
                                 description: Whether to create the AWS Secrets Manager secret. Defaults to true. Set to false to skip creation when using an existing secret.
                                 type: boolean
