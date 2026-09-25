@@ -98,9 +98,16 @@ _initItems = [
     # observed kubeconfig for bootstrap-ctp, will be used to derive settings
     # like upbound org, bootstrap-group, bootstrap-controlplane and space host
     kubernetesm.Object{
-        metadata = utils._metadata("observedCtpKubeconfig") | {
+        metadata = {
             name = "{}-bootstrap-ctp-kubeconfig-observed".format(oxrMeta.name)
             annotations = {
+                # Set explicitly rather than merging onto utils._metadata(): `|` REPLACES the
+                # annotations map instead of merging into it, so adding krm.kcl.dev/ready on
+                # top of it silently drops the composition resource name below - and main.k
+                # looks this resource up by that name as ocds.observedCtpKubeconfig. Losing it
+                # makes the lookup return nothing, so status.upbound stays {} and the
+                # Environment never initialises.
+                "krm.kcl.dev/composition-resource-name" = "observedCtpKubeconfig"
                 # Gates the whole XR's readiness on initialisation having finished.
                 #
                 # Until the bootstrap kubeconfig is observed and status.upbound populated,
