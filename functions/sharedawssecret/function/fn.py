@@ -27,45 +27,16 @@ from models.io.upbound.m.aws.iam.userpolicyattachment import v1beta1 as upav1bet
 from models.io.upbound.m.aws.secretsmanager.secret import v1beta1 as smsecretv1beta1
 from models.io.upbound.sa.sharedawssecret import v1 as sasv1
 
-ORPHAN = ["Create", "Observe", "Update", "LateInitialize"]
-IAM_NAME_MAX = 64
-
-
-def _simple_hash(s: str) -> str:
-    """Position-weighted character sum, truncated to 8 digits.
-
-    Not a cryptographic hash, and it does not need to be: it only has to be stable, because
-    its output becomes part of an AWS resource name. It must stay identical to the KCL
-    original it replaces - a different value renames, and so replaces, the IAM user.
-    """
-    return str(abs(len(s) * 31 + sum(ord(c) * (i + 1) for i, c in enumerate(s))))[:8]
-
-
-def truncate_iam_name(name: str, suffix: str) -> str:
-    """Fit an IAM name into 64 characters, keeping the suffix and hashing the prefix."""
-    if len(name) <= IAM_NAME_MAX:
-        return name
-    base = name[: len(name) - len(suffix)]
-    prefix_space = IAM_NAME_MAX - len(suffix) - 8 - 1
-    if prefix_space <= 0:
-        return f"{_simple_hash(base)}{suffix}"
-    return f"{base[:prefix_space].rstrip('-')}-{_simple_hash(base)}{suffix}"
-
-
-def _dig(d: dict, *path):
-    """Walk nested dicts, returning None at the first missing or empty level."""
-    for key in path:
-        if not isinstance(d, dict):
-            return None
-        d = d.get(key)
-    return d
-
+from .common.dicts import dig
+from .common.kcl_parity import OBJECT_FOR_PROVIDER_DEFAULTS, OBJECT_SPEC_DEFAULTS
+from .common.naming import truncate_iam_name
+from .common.policy import management_policies
 
 # Defaults the KCL implementation emitted without setting them - its typed models
 # materialise every schema default into the output. They are the provider's and
 # External Secrets Operator's own defaults, so they change nothing on a cluster, but they are
-# part of the rendered desired state, and the port keeps that output identical.
-OBJECT_DEFAULTS = {"deletionPropagationPolicy": "Background"}
+# part of the rendered desired state, and the port keeps that output identical. The Object
+# defaults shared with the other functions live in common.kcl_parity.
 REMOTE_REF_DEFAULTS = {"conversionStrategy": "Default", "decodingStrategy": "None", "metadataPolicy": "None"}
 TARGET_DEFAULTS = {"creationPolicy": "Owner", "deletionPolicy": "Retain"}
 TEMPLATE_DEFAULTS = {"engineVersion": "v2", "mergePolicy": "Replace"}
@@ -78,8 +49,8 @@ def _with_defaults(d: dict, defaults: dict) -> dict:
 
 def _object_spec(**kwargs) -> objectv1alpha1.Spec:
     """An Object spec carrying the two provider-kubernetes defaults KCL materialised."""
-    kwargs["forProvider"] = objectv1alpha1.ForProvider(**OBJECT_DEFAULTS, **kwargs["forProvider"])
-    return objectv1alpha1.Spec(watch=False, **kwargs)
+    kwargs["forProvider"] = objectv1alpha1.ForProvider(**OBJECT_FOR_PROVIDER_DEFAULTS, **kwargs["forProvider"])
+    return objectv1alpha1.Spec(**OBJECT_SPEC_DEFAULTS, **kwargs)
 
 
 class FunctionRunner(grpcv1.FunctionRunnerService):
@@ -103,7 +74,7 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
         sms = aws.secretsManagerSecret or sasv1.SecretsManagerSecret()
 
         deletion_policy = params.deletionPolicy or "Orphan"
-        mgmt = ["*"] if deletion_policy == "Delete" else ORPHAN
+        mgmt = management_policies(deletion_policy)
         # Opt-out, not opt-in: only an explicit false disables creation. The block itself is
         # optional, and Environment omits it whenever sharedSecret carries no settings.
         create_secret = sms.create is not False
@@ -118,10 +89,10 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
 
         # User-supplied pass-through values come from the raw request, not the typed model,
         # so they reach the manifest exactly as written - no defaults added, nothing reordered.
-        raw_ext = _dig(raw, "spec", "parameters", "externalSecret") or {}
-        secret_labels = _dig(raw_ext, "spec", "target", "template", "metadata", "labels") or {}
-        secret_template_data = _dig(raw_ext, "spec", "target", "template", "data")
-        secret_data = _dig(raw_ext, "spec", "data")
+        raw_ext = dig(raw, "spec", "parameters", "externalSecret") or {}
+        secret_labels = dig(raw_ext, "spec", "target", "template", "metadata", "labels") or {}
+        secret_template_data = dig(raw_ext, "spec", "target", "template", "data")
+        secret_data = dig(raw_ext, "spec", "data")
         secret_namespace = raw_ext.get("namespace") or "default"
         external_secret_name = raw_ext.get("name") or ctp
 

@@ -28,6 +28,7 @@ from models.io.upbound.sa.environment import v1 as envv1
 from models.io.upbound.sa.sharedawssecret import v1 as sasv1
 
 from . import resources as r
+from .common.dicts import dig
 
 # The bootstrap kubeconfig's server URL has the shape
 #   https://<spaceHost>/apis/spaces.upbound.io/v1beta1/namespaces/<group>/controlplanes/<ctp>/k8s
@@ -35,15 +36,6 @@ from . import resources as r
 SPACE_HOST_RE = re.compile(r"https:\/\/([.\w-]+)(?:\/[.\w-]+){8}")
 BOOTSTRAP_GROUP_RE = re.compile(r"https:\/(?:\/[.\w-]+){5}\/([.\w-]+)(?:\/[.\w-]+){3}")
 BOOTSTRAP_CTP_RE = re.compile(r"https:\/(?:\/[.\w-]+){7}\/([.\w-]+)(?:\/[.\w-]+)")
-
-
-def _dig(d, *path):
-    """Walk nested dicts, returning None at the first missing level."""
-    for key in path:
-        if not isinstance(d, dict):
-            return None
-        d = d.get(key)
-    return d
 
 
 def _observed(req: fnv1.RunFunctionRequest, key: str) -> dict:
@@ -128,7 +120,7 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
         # Initialisation
         # =================================================================================
         parsed = {}
-        encoded = _dig(_observed(req, "observedCtpKubeconfig"), "status", "atProvider", "manifest", "data", "kubeconfig")
+        encoded = dig(_observed(req, "observedCtpKubeconfig"), "status", "atProvider", "manifest", "data", "kubeconfig")
         if encoded:
             parsed = parse_bootstrap_kubeconfig(encoded)
 
@@ -220,7 +212,7 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
                 provider_config_name=bootstrap_pc,
                 resource_name="observed-access-token",
             )
-            token = _dig(_observed(req, "observed-access-token"), "status", "atProvider", "manifest", "data", "token")
+            token = dig(_observed(req, "observed-access-token"), "status", "atProvider", "manifest", "data", "token")
             if token:
                 desired += r.argo_server_secret(
                     access_token=base64.b64decode(token).decode(),
@@ -247,7 +239,7 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
                 group=group,
                 org=st.org,
                 token_ref=token_ref,
-                observed_team_external_name=_dig(
+                observed_team_external_name=dig(
                     _observed(req, "envTeam"), "metadata", "annotations", "crossplane.io/external-name"
                 ),
                 space_provider_config_name=f"{name}-space",

@@ -11,9 +11,7 @@ changed resource. Two KCL behaviours need reproducing to get there:
   set them.
 """
 
-# provider-kubernetes Object defaults KCL emitted on every Object.
-OBJECT_FOR_PROVIDER_DEFAULTS = {"deletionPropagationPolicy": "Background"}
-OBJECT_SPEC_DEFAULTS = {"watch": False}
+from .common.kcl_parity import OBJECT_FOR_PROVIDER_DEFAULTS, OBJECT_SPEC_DEFAULTS
 
 
 def kcl_str(value, in_list: bool = False) -> str:

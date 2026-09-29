@@ -19,9 +19,7 @@ from models.io.upbound.m.repository import v1alpha1 as repov1alpha1
 from models.io.upbound.m.repository.permission import v1alpha1 as permv1alpha1
 from models.io.upbound.sa.upboundreposet import v1 as reposetv1
 
-# Orphan on delete: a repository outlives the UpboundRepoSet that created it. Namespaced
-# MRs have no deletionPolicy; this is the managementPolicies equivalent.
-ORPHAN = ["Create", "Observe", "Update", "LateInitialize"]
+from .common.policy import ORPHAN
 
 
 class FunctionRunner(grpcv1.FunctionRunnerService):
@@ -61,6 +59,7 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
                         annotations={"crossplane.io/external-name": repo},
                     ),
                     spec=repov1alpha1.Spec(
+                        # Orphan on delete: a repository outlives the UpboundRepoSet.
                         managementPolicies=ORPHAN,
                         forProvider=repov1alpha1.ForProvider(
                             name=repo,
