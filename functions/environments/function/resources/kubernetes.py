@@ -2,14 +2,23 @@
 
 import base64
 
+import yaml
+
 from models.io.crossplane.m.kubernetes.object import v1alpha1 as objectv1alpha1
 from models.io.crossplane.m.kubernetes.providerconfig import v1alpha1 as k8spcv1alpha1
 from models.io.crossplane.protection.usage import v1beta1 as usagev1beta1
 
-from ..compat import kcl_str, object_spec
+from ..common.kcl_parity import OBJECT_FOR_PROVIDER_DEFAULTS, OBJECT_SPEC_DEFAULTS
 from .util import pc_ref
 
 OBJECT_API = "kubernetes.m.crossplane.io/v1alpha1"
+
+
+def object_spec(spec: dict) -> dict:
+    """An Object spec with the provider-kubernetes defaults KCL materialised."""
+    spec = {**OBJECT_SPEC_DEFAULTS, **spec}
+    spec["forProvider"] = {**OBJECT_FOR_PROVIDER_DEFAULTS, **spec["forProvider"]}
+    return spec
 
 
 def k8s_object(name: str | None, spec: dict, annotations: dict | None = None) -> objectv1alpha1.Object:
@@ -78,7 +87,7 @@ def upbound_provider_config(*, space_host, org, provider_config_name, secret_nam
     config_name = f"{ctp}-ctp" if ctp else (f"{group}-group" if group else f"{prefix}-space")
     scope = "envCtp" if ctp else ("envGroup" if group else "space")
     secret_name = f"{config_name}-kubeconfig"
-    kubeconfig = kcl_str(upbound_kubeconfig(space_host, org, group or "default", ctp or ""))
+    kubeconfig = yaml.safe_dump(upbound_kubeconfig(space_host, org, group or "default", ctp or ""), sort_keys=False)
     return [
         (f"{scope}Kubeconfig", k8s_object(secret_name, {
             # The API default, set explicitly: KCL materialised it.

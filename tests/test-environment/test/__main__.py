@@ -5,6 +5,49 @@ import yaml
 from models.io.k8s.apimachinery.pkg.apis.meta import v1 as k8s
 from models.io.upbound.dev.meta.compositiontest import v1alpha1 as compositiontest
 
+def kubeconfig(server: str, namespace: str) -> str:
+    """The kubeconfig the composition writes for provider-kubernetes, as YAML.
+
+    Stated here as data rather than copied from the function, so the test pins what the
+    kubeconfig says: the server, the context namespace, and `up organization token` as the
+    credential plugin.
+    """
+    return yaml.safe_dump({
+        "apiVersion": "v1",
+        "clusters": [{"cluster": {"insecure-skip-tls-verify": True, "server": server}, "name": "upbound"}],
+        "contexts": [{
+            "context": {
+                "cluster": "upbound",
+                "extensions": [{
+                    "extension": {
+                        "apiVersion": "upbound.io/v1alpha1",
+                        "kind": "SpaceExtension",
+                        "spec": {"cloud": {"organization": "upbound"}},
+                    },
+                    "name": "spaces.upbound.io/space",
+                }],
+                "namespace": namespace,
+                "user": "upbound",
+            },
+            "name": "upbound",
+        }],
+        "current-context": "upbound",
+        "kind": "Config",
+        "preferences": {},
+        "users": [{
+            "name": "upbound",
+            "user": {"exec": {
+                "apiVersion": "client.authentication.k8s.io/v1",
+                "args": ["organization", "token"],
+                "command": "up",
+                "env": [{"name": "ORGANIZATION", "value": "upbound"}, {"name": "UP_PROFILE", "value": "default"}],
+                "interactiveMode": "IfAvailable",
+                "provideClusterInfo": False,
+            }},
+        }],
+    }, sort_keys=False)
+
+
 ORCHESTRATE = ["Create", "Observe", "Update", "LateInitialize"]
 
 
@@ -105,7 +148,7 @@ test_environment = compositiontest.CompositionTest(
         assertResources=[
             kubeconfig_object(
                 "example-ctp-kubeconfig",
-                "{'apiVersion': 'v1', 'clusters': [{'cluster': {'insecure-skip-tls-verify': True, 'server': 'https://upbound-aws-us-east-1.space.mxe.upbound.io/apis/spaces.upbound.io/v1beta1/namespaces/solutions-non-prod-default-example/controlplanes/example/k8s'}, 'name': 'upbound'}], 'contexts': [{'context': {'cluster': 'upbound', 'extensions': [{'extension': {'apiVersion': 'upbound.io/v1alpha1', 'kind': 'SpaceExtension', 'spec': {'cloud': {'organization': 'upbound'}}}, 'name': 'spaces.upbound.io/space'}], 'namespace': 'default', 'user': 'upbound'}, 'name': 'upbound'}], 'current-context': 'upbound', 'kind': 'Config', 'preferences': {}, 'users': [{'name': 'upbound', 'user': {'exec': {'apiVersion': 'client.authentication.k8s.io/v1', 'args': [organization, token], 'command': 'up', 'env': [{'name': 'ORGANIZATION', 'value': 'upbound'}, {'name': 'UP_PROFILE', 'value': 'default'}], 'interactiveMode': 'IfAvailable', 'provideClusterInfo': False}}}]}",
+                kubeconfig("https://upbound-aws-us-east-1.space.mxe.upbound.io/apis/spaces.upbound.io/v1beta1/namespaces/solutions-non-prod-default-example/controlplanes/example/k8s", "default"),
             ),
             kubernetes_object(
                 "example-ctp",
@@ -125,7 +168,7 @@ test_environment = compositiontest.CompositionTest(
             ),
             kubeconfig_object(
                 "solutions-non-prod-default-example-group-kubeconfig",
-                "{'apiVersion': 'v1', 'clusters': [{'cluster': {'insecure-skip-tls-verify': True, 'server': 'https://upbound-aws-us-east-1.space.mxe.upbound.io'}, 'name': 'upbound'}], 'contexts': [{'context': {'cluster': 'upbound', 'extensions': [{'extension': {'apiVersion': 'upbound.io/v1alpha1', 'kind': 'SpaceExtension', 'spec': {'cloud': {'organization': 'upbound'}}}, 'name': 'spaces.upbound.io/space'}], 'namespace': 'solutions-non-prod-default-example', 'user': 'upbound'}, 'name': 'upbound'}], 'current-context': 'upbound', 'kind': 'Config', 'preferences': {}, 'users': [{'name': 'upbound', 'user': {'exec': {'apiVersion': 'client.authentication.k8s.io/v1', 'args': [organization, token], 'command': 'up', 'env': [{'name': 'ORGANIZATION', 'value': 'upbound'}, {'name': 'UP_PROFILE', 'value': 'default'}], 'interactiveMode': 'IfAvailable', 'provideClusterInfo': False}}}]}",
+                kubeconfig("https://upbound-aws-us-east-1.space.mxe.upbound.io", "solutions-non-prod-default-example"),
             ),
             kubernetes_provider_config("example-ctp", "example-ctp-kubeconfig"),
             ### AWS ###
@@ -225,7 +268,7 @@ test_environment = compositiontest.CompositionTest(
             usage("example-ctp-kubeconfig", by="example-ctp"),
             kubeconfig_object(
                 "example-space-kubeconfig",
-                "{'apiVersion': 'v1', 'clusters': [{'cluster': {'insecure-skip-tls-verify': True, 'server': 'https://upbound-aws-us-east-1.space.mxe.upbound.io'}, 'name': 'upbound'}], 'contexts': [{'context': {'cluster': 'upbound', 'extensions': [{'extension': {'apiVersion': 'upbound.io/v1alpha1', 'kind': 'SpaceExtension', 'spec': {'cloud': {'organization': 'upbound'}}}, 'name': 'spaces.upbound.io/space'}], 'namespace': 'default', 'user': 'upbound'}, 'name': 'upbound'}], 'current-context': 'upbound', 'kind': 'Config', 'preferences': {}, 'users': [{'name': 'upbound', 'user': {'exec': {'apiVersion': 'client.authentication.k8s.io/v1', 'args': [organization, token], 'command': 'up', 'env': [{'name': 'ORGANIZATION', 'value': 'upbound'}, {'name': 'UP_PROFILE', 'value': 'default'}], 'interactiveMode': 'IfAvailable', 'provideClusterInfo': False}}}]}",
+                kubeconfig("https://upbound-aws-us-east-1.space.mxe.upbound.io", "default"),
             ),
             kubernetes_object("example-observed-access-token-observed", OBSERVED_ACCESS_TOKEN_SPEC),
             kubernetes_object(
