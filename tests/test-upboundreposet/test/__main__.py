@@ -21,7 +21,7 @@ def repository(name: str, public: bool) -> dict:
         "kind": "Repository",
         "metadata": {
             "annotations": {
-                "crosslane.io/external-name": name,
+                "crossplane.io/external-name": name,
                 "crossplane.io/composition-resource-name": f"{ORG}-{name}",
             },
             "generateName": "example-",

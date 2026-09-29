@@ -53,11 +53,12 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
                 rsp.desired.resources[f"{org}-{repo}"],
                 repov1alpha1.Repository(
                     metadata=k8s.ObjectMeta(
-                        # The misspelling is inherited from the KCL function, whose output
-                        # this port reproduces exactly: correcting it changes how
-                        # provider-upbound identifies existing repositories, which is a
-                        # behaviour change to make deliberately, on its own.
-                        annotations={"crosslane.io/external-name": repo},
+                        # provider-upbound looks a Repository up by its external name.
+                        # Setting it to the repository name lets the first Observe find an
+                        # existing repository; left unset, Crossplane defaults it to the
+                        # generated metadata.name, which matches nothing, and the provider
+                        # only recovers by running Create - an upsert - and rewriting it.
+                        annotations={"crossplane.io/external-name": repo},
                     ),
                     spec=repov1alpha1.Spec(
                         managementPolicies=ORPHAN,
