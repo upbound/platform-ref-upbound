@@ -532,7 +532,9 @@ for d in functions/*; do (cd "$d" && ../../.venv/bin/pip install -q -e .); done
 Code more than one function needs lives in `common/` at the project root, not in any one
 function. A function is packaged from its own directory alone, so each carries a
 `function/common` symlink to it, and `up` copies the symlink's target into the built function.
-Import it as `from .common.naming import truncate_iam_name`.
+Import it as `from .common.naming import truncate_iam_name`. On Windows, clone with
+`git config core.symlinks true` (and Developer Mode or admin rights), or the symlinks check
+out as plain text files.
 
 > Function directory names are the published package paths
 > (`xpkg.upbound.io/<org>/platform-ref-upbound_<name>`) — renaming one publishes a new package.

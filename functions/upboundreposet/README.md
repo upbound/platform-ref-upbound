@@ -1,4 +1,9 @@
-# Composition Function
+# upboundreposet
 
-The Python `hatch` toolchain requires that projects have a README file. You may
-fill in details about your composition function here.
+Composition function for `UpboundRepoSet` (`sa.upbound.io/v1`): Upbound repositories, per-team
+permissions on them, and the provider-upbound ProviderConfig they share.
+
+- `function/fn.py` — the function
+- `function/common` — symlink to the project's shared `common/` package
+
+Tests: `tests/test-upboundreposet*`. See the project README for how to build and run them.
