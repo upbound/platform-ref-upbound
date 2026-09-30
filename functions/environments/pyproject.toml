@@ -11,8 +11,8 @@ license = "Apache-2.0"
 dependencies = [
   "crossplane-function-sdk-python==0.15.1",
   "click==8.3.2",
-  "grpcio>=1.73.1",
-  "pyyaml>=6.0",
+  "grpcio==1.84.0",
+  "pyyaml==6.0.2",
   "crossplane-models @ file:./../../.up/python",
 ]
 dynamic = ["version"]
