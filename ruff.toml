@@ -1,0 +1,10 @@
+# Lint for the composition functions, the tests, and common/. CI pins the ruff version, so the
+# rule set cannot drift under a release that changes its defaults.
+target-version = "py313"
+line-length = 120
+extend-exclude = [".up", "_output"]
+
+[lint.per-file-ignores]
+# main.py is the `up function generate` scaffold, left as generated: it catches Exception
+# around server startup and carries a noqa for a rule this config does not enable.
+"functions/*/function/main.py" = ["BLE001", "RUF100"]

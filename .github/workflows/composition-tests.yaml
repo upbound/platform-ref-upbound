@@ -6,6 +6,13 @@ on:
       - main
   pull_request: {}
 
+env:
+  # Build functions one at a time. Every Python function build mounts the same
+  # up-python-sdk-pip-cache Docker volume, and on a fresh runner - where that volume starts
+  # empty - concurrent builds race creating its directories and fail with
+  # "mkdir ...: file exists".
+  UP_MAX_CONCURRENCY: "1"
+
 jobs:
   composition-tests:
     runs-on: ubuntu-latest

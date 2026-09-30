@@ -1,0 +1,14 @@
+name: ruff
+on: [pull_request]
+jobs:
+  ruff:
+    name: runner / ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      # Pinned: ruff's default rule set changes between releases, and ruff.toml only
+      # adjusts it. Bump deliberately, and fix what the new version reports in the same change.
+      - name: Install ruff
+        run: python3 -m pip install --quiet ruff==0.16.9
+      - name: ruff check
+        run: ruff check --output-format=github functions tests common
