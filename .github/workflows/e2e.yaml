@@ -10,18 +10,10 @@ on:
       - labeled
 
 env:
-  # Build functions one at a time. Every Python function build mounts the same
-  # up-python-sdk-pip-cache Docker volume, and on a fresh runner - where that volume starts
-  # empty - concurrent builds race creating its directories and fail with
-  # "mkdir ...: file exists".
-  UP_MAX_CONCURRENCY: "1"
   UP_API_TOKEN: ${{ secrets.UP_E2E_API_TOKEN || secrets.UP_API_TOKEN }}
   UP_ORG: ${{ secrets.UP_E2E_ORG || secrets.UP_ORG }}
   UP_GROUP: ${{ secrets.UP_E2E_GROUP || secrets.UP_GROUP || 'default' }}
   UP_ROBOT_ID: ${{ secrets.UP_E2E_ROBOT_ID || secrets.UP_ROBOT_ID }}
-  # The space the e2e control plane is created in. Read by tests/e2etest-environment, which
-  # derives the Spaces API host from it, so this and the `up ctx` step below cannot drift.
-  UP_SPACE: ${{ secrets.UP_E2E_SPACE || 'upbound-gcp-us-central-1' }}
 
 jobs:
   e2e:
@@ -30,7 +22,7 @@ jobs:
     steps:
       - name: Checkout
         id: checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -43,7 +35,7 @@ jobs:
 
       # doesn't work with plain token when pushing otherwise
       - name: Login to xpkg with robot
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4
         with:
           registry: xpkg.upbound.io
           username: ${{ env.UP_ROBOT_ID }}
@@ -53,7 +45,7 @@ jobs:
         run: up project build
 
       - name: Switch up context
-        run: up ctx ${{ env.UP_ORG }}/${{ env.UP_SPACE }}/${{ env.UP_GROUP }}
+        run: up ctx ${{ env.UP_ORG }}/upbound-gcp-us-central-1/${{ env.UP_GROUP }}
 
       - name: Run e2e tests
         run: up test run tests/* --e2e
