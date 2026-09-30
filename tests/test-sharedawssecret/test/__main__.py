@@ -255,6 +255,11 @@ def shared_aws_secret(deletion_policy: str, secrets_manager_secret: dict | None 
     }
 
 
+def _with_external_secret(xr: dict, external_secret: dict) -> dict:
+    xr["spec"]["parameters"]["externalSecret"] = external_secret
+    return xr
+
+
 def composition_test(name: str, assert_resources: list[dict], **spec) -> compositiontest.CompositionTest:
     return compositiontest.CompositionTest(
         metadata=k8s.ObjectMeta(name=name),
@@ -338,6 +343,18 @@ tests = [
         ],
         # secretsManagerSecret deliberately omitted
         xr=shared_aws_secret("Orphan"),
+    ),
+    # An empty externalSecret.spec.data means "nothing specified", not "sync no keys". It
+    # has to fall back to extracting the whole secret, as an absent one does - taking it at
+    # face value renders `data: []`, and the SharedExternalSecret then syncs nothing at all.
+    # (The same holds for an empty template.data, whose absence partial matching cannot assert.)
+    composition_test(
+        "test-sharedawssecret-empty-external-secret-data",
+        [SHARED_EXTERNAL_SECRET_DEFAULT],
+        xr=_with_external_secret(
+            shared_aws_secret("Orphan"),
+            {"spec": {"data": [], "target": {"template": {"data": {}}}}},
+        ),
     ),
 ]
 

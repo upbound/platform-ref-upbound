@@ -17,7 +17,6 @@ import grpc
 from crossplane.function import logging, resource, response
 from crossplane.function.proto.v1 import run_function_pb2 as fnv1
 from crossplane.function.proto.v1 import run_function_pb2_grpc as grpcv1
-
 from models.io.crossplane.m.kubernetes.object import v1alpha1 as objectv1alpha1
 from models.io.k8s.apimachinery.pkg.apis.meta import v1 as k8s
 from models.io.upbound.m.aws.iam.accesskey import v1beta1 as accesskeyv1beta1
@@ -91,8 +90,11 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
         # so they reach the manifest exactly as written - no defaults added, nothing reordered.
         raw_ext = dig(raw, "spec", "parameters", "externalSecret") or {}
         secret_labels = dig(raw_ext, "spec", "target", "template", "metadata", "labels") or {}
-        secret_template_data = dig(raw_ext, "spec", "target", "template", "data")
-        secret_data = dig(raw_ext, "spec", "data")
+        # `or None`: an empty list or map means "not specified", as it did in the KCL version
+        # and does in Environment. Taken literally, `data: []` would replace the default
+        # extract of the whole secret with nothing, and the external secret would sync no keys.
+        secret_template_data = dig(raw_ext, "spec", "target", "template", "data") or None
+        secret_data = dig(raw_ext, "spec", "data") or None
         secret_namespace = raw_ext.get("namespace") or "default"
         external_secret_name = raw_ext.get("name") or ctp
 
@@ -171,11 +173,11 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
                 metadata=k8s.ObjectMeta(name=key_secret_name),
                 spec=_object_spec(
                     managementPolicies=mgmt,
-                    forProvider=dict(manifest={
+                    forProvider={"manifest": {
                         "apiVersion": "v1",
                         "kind": "Secret",
                         "metadata": {"name": key_secret_name, "namespace": group},
-                    }),
+                    }},
                     providerConfigRef=upbound_pc,
                     references=[objectv1alpha1.Reference(
                         patchesFrom=objectv1alpha1.PatchesFrom(
@@ -231,7 +233,7 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
                 metadata=k8s.ObjectMeta(name=f"{ctp}-sss"),
                 spec=_object_spec(
                     managementPolicies=mgmt,
-                    forProvider=dict(manifest={
+                    forProvider={"manifest": {
                         "apiVersion": "spaces.upbound.io/v1alpha1",
                         "kind": "SharedSecretStore",
                         "metadata": {"name": ctp, "namespace": group},
@@ -247,7 +249,7 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
                                 }},
                             }},
                         },
-                    }),
+                    }},
                     providerConfigRef=upbound_pc,
                 ),
             ),
@@ -279,7 +281,7 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
                 metadata=k8s.ObjectMeta(name=f"{ctp}-ses"),
                 spec=_object_spec(
                     managementPolicies=mgmt,
-                    forProvider=dict(manifest={
+                    forProvider={"manifest": {
                         "apiVersion": "spaces.upbound.io/v1alpha1",
                         "kind": "SharedExternalSecret",
                         "metadata": {"name": external_secret_name, "namespace": group},
@@ -288,7 +290,7 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
                             "namespaceSelector": {"names": [secret_namespace]},
                             "externalSecretSpec": external_secret_spec,
                         },
-                    }),
+                    }},
                     providerConfigRef=upbound_pc,
                 ),
             ),

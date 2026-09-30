@@ -4,6 +4,7 @@ import yaml
 from models.io.k8s.apimachinery.pkg.apis.meta import v1 as k8s
 from models.io.upbound.dev.meta.compositiontest import v1alpha1 as compositiontest
 
+
 def kubeconfig(server: str, namespace: str) -> str:
     """The kubeconfig the composition writes for provider-kubernetes, as YAML.
 

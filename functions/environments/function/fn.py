@@ -23,7 +23,6 @@ import yaml
 from crossplane.function import logging, resource, response
 from crossplane.function.proto.v1 import run_function_pb2 as fnv1
 from crossplane.function.proto.v1 import run_function_pb2_grpc as grpcv1
-
 from models.io.upbound.sa.environment import v1 as envv1
 from models.io.upbound.sa.sharedawssecret import v1 as sasv1
 
@@ -45,16 +44,24 @@ def _observed(req: fnv1.RunFunctionRequest, key: str) -> dict:
 
 
 def parse_bootstrap_kubeconfig(encoded: str) -> dict:
-    """Extract the Space coordinates from the bootstrap control plane's kubeconfig."""
-    kubeconfig = yaml.safe_load(base64.b64decode(encoded))
-    cluster = (kubeconfig.get("clusters") or [{}])[0].get("cluster") or {}
+    """Extract the Space coordinates from the bootstrap control plane's kubeconfig.
+
+    Takes only what is there. A kubeconfig without a server URL, or without the Spaces
+    extension naming the organization, yields no coordinates rather than an error, so the
+    Environment stays uninitialised and keeps waiting - a malformed Secret should not turn every
+    reconcile of the XR into a function failure.
+    """
+    kubeconfig = yaml.safe_load(base64.b64decode(encoded)) or {}
+    cluster = dig((kubeconfig.get("clusters") or [{}])[0], "cluster") or {}
+    context = dig((kubeconfig.get("contexts") or [{}])[0], "context") or {}
+    extension = dig((context.get("extensions") or [{}])[0], "extension") or {}
     server = cluster.get("server")
     return {
         "serverCaData": cluster.get("certificate-authority-data"),
-        "spaceHost": SPACE_HOST_RE.sub(r"\1", server),
-        "bootstrapGroup": BOOTSTRAP_GROUP_RE.sub(r"\1", server),
-        "bootstrapCtp": BOOTSTRAP_CTP_RE.sub(r"\1", server),
-        "org": kubeconfig["contexts"][0]["context"]["extensions"][0]["extension"]["spec"]["cloud"]["organization"],
+        "spaceHost": SPACE_HOST_RE.sub(r"\1", server) if server else None,
+        "bootstrapGroup": BOOTSTRAP_GROUP_RE.sub(r"\1", server) if server else None,
+        "bootstrapCtp": BOOTSTRAP_CTP_RE.sub(r"\1", server) if server else None,
+        "org": dig(extension, "spec", "cloud", "organization"),
     }
 
 
@@ -109,7 +116,7 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
         rsp = response.to(req)
 
         xr = envv1.Environment(**resource.struct_to_dict(req.observed.composite.resource))
-        name, namespace = xr.metadata.name, xr.metadata.namespace
+        name = xr.metadata.name
         params = xr.spec.parameters
         up = params.upbound
         token_ref = {"name": up.tokenSecretRef.name, "namespace": up.tokenSecretRef.namespace, "key": up.tokenSecretRef.key}
@@ -224,8 +231,13 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
                     space_host=st.spaceHost,
                 )
 
-        pc_common = dict(space_host=st.spaceHost, org=st.org, provider_config_name=bootstrap_pc,
-                         secret_namespace=namespace, token_ref=token_ref)
+        pc_common = {
+            "space_host": st.spaceHost,
+            "org": st.org,
+            "provider_config_name": bootstrap_pc,
+            "secret_namespace": namespace,
+            "token_ref": token_ref,
+        }
         if up.createCtp:
             desired += r.upbound_provider_config(group=group, ctp=name, **pc_common)
         # Not gated on createGroup: the ControlPlane and the SharedAWSSecret both reach the

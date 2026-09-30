@@ -12,7 +12,6 @@ import grpc
 from crossplane.function import logging, resource, response
 from crossplane.function.proto.v1 import run_function_pb2 as fnv1
 from crossplane.function.proto.v1 import run_function_pb2_grpc as grpcv1
-
 from models.io.k8s.apimachinery.pkg.apis.meta import v1 as k8s
 from models.io.upbound.m.providerconfig import v1alpha1 as pcv1alpha1
 from models.io.upbound.m.repository import v1alpha1 as repov1alpha1
