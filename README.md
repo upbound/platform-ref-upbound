@@ -541,7 +541,7 @@ out as plain text files.
 
 > CI builds functions one at a time (`UP_MAX_CONCURRENCY=1`). Every Python function build
 > mounts the same pip-cache Docker volume, and on a fresh runner concurrent builds race creating
-> its directories.
+> its directories. Tracked upstream in [upbound/up#1717](https://github.com/upbound/up/issues/1717).
 
 > The composition glob is `tests/test-*`, not `tests/*`. `up test run` generates manifests for
 > every directory it matches, even ones it will not execute, and `tests/e2etest-environment`
