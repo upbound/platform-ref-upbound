@@ -6,23 +6,16 @@ on:
       - main
   pull_request: {}
 
-env:
-  # Build functions one at a time. Every Python function build mounts the same
-  # up-python-sdk-pip-cache Docker volume, and on a fresh runner - where that volume starts
-  # empty - concurrent builds race creating its directories and fail with
-  # "mkdir ...: file exists".
-  UP_MAX_CONCURRENCY: "1"
-
 jobs:
   composition-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         id: checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install up
-        uses: upbound/action-up@53fe6395637d884c80d2bbc8c2d75d0ece776ced # v1
+        uses: upbound/action-up@2c4d9663b902087b0808b79fe2c7ec68424d87d8 # v1
         with:
           skip-login: true
 
@@ -30,4 +23,4 @@ jobs:
         run: up project build
 
       - name: Run composition tests
-        run: up test run tests/test-*
+        run: up test run tests/*
